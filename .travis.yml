@@ -1,1 +1,6 @@
 language: go
+
+go_import_path: 
+github.com/adhuri/CoMPeL-Monitoring/compel-monitoring-server
+github.com/adhuri/CoMPeL-Monitoring/compel-monitoring-agent
+
