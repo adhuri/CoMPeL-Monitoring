@@ -1,0 +1,8 @@
+[server]
+compel server_port=5005
+
+[agent]
+m[1:2]
+
+[agent:vars]
+agent_port=5006

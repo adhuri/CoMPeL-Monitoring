@@ -1,0 +1,12 @@
+---
+# This playbook builds and deploys server and client on specified ports on respective hosts
+
+- hosts: compel
+  vars:
+    module_name: "compel-monitoring"
+  tasks:
+    - name: Deploy {{ module_name }}-server on compel
+      copy:
+        src: ./bin/{{ module_name }}-server
+        dest: ~/{{ module_name }}-server
+        mode: "u+x"
