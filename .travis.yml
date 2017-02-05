@@ -9,6 +9,6 @@ deploy:
   file:
   - $TRAVIS_BUILD_DIR/compel-monitoring-server
   - $TRAVIS_BUILD_DIR/compel-monitoring-agent
-
+  skip_cleanup: true
   on:
     tags: true
