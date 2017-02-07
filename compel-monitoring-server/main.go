@@ -3,22 +3,17 @@ package main
 import "net"
 import "fmt"
 import "bufio"
-import "os"
+import "strings"
 
 func main() {
-	conn, err := net.Dial("tcp", "127.0.0.1:8081")
-	if err != nil {
-		fmt.Println("Connection failed")
-	} else {
-		for {
-			reader := bufio.NewReader(os.Stdin)
-			fmt.Print("Text to send: ")
-			text, _ := reader.ReadString('\n')
-			// send to socket
-			fmt.Fprintf(conn, text+"\n")
-			// listen for reply
-			message, _ := bufio.NewReader(conn).ReadString('\n')
-			fmt.Print("Message from server: " + message)
-		}
+
+	ln, _ := net.Listen("tcp", ":8081")
+	conn, _ := ln.Accept()
+
+	for {
+		message, _ := bufio.NewReader(conn).ReadString('\n')
+		fmt.Print("Message Received:", string(message))
+		newmessage := strings.ToUpper(message)
+		conn.Write([]byte(newmessage + "\n"))
 	}
 }
