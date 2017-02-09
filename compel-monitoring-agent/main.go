@@ -4,8 +4,10 @@ import "net"
 import "fmt"
 import "bufio"
 import "time"
+import github.com/adhuri/Compel-Monitoring/protocol "protocol"
 
 func validateResponse(ackReply string, connectMessage string) bool {
+	// validate the response from the server
 	return true
 }
 
@@ -33,6 +35,7 @@ func main() {
 			fmt.Print(".")
 			time.Sleep(time.Second * 3)
 		} else {
+			// If connection successful send a connect message
 			sendInitMessage(conn)
 			fmt.Println("\n Connected to Server")
 			connectedToServer = true
