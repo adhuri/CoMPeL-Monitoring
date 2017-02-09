@@ -3,7 +3,6 @@ package main
 import "net"
 import "fmt"
 import "bufio"
-import "strings"
 
 func main() {
 
@@ -13,7 +12,7 @@ func main() {
 	for {
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 		fmt.Print("Message Received:", string(message))
-		newmessage := strings.ToUpper(message)
+		newmessage := "2"
 		conn.Write([]byte(newmessage + "\n"))
 	}
 }
