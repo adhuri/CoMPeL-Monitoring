@@ -7,35 +7,41 @@ import (
 )
 
 type ConnectRequest struct {
-	messageId int64
-	agentIP   net.IP
-	agentPort uint16
+	//AgentIP   net.IP
+	MessageId int64
+	AgentIP   [4]byte
+	AgentPort uint16
 }
 
 type ConnectReply struct {
-	messageId     int64
-	agentIP       net.IP
-	isSuccessfull bool
+	//AgentIP   net.IP
+	MessageId     int64
+	AgentIP       [4]byte
+	IsSuccessfull uint8
 }
 
-func getIPAddressOfHost() (*net.IP, error) {
+func getIPAddressOfHost(hostIP []byte) error {
+	// get all Interfaces
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, iface := range ifaces {
 		if iface.Flags&net.FlagUp == 0 {
-			continue // interface down
+			// interfae down
+			continue
 		}
 		if iface.Flags&net.FlagLoopback != 0 {
-			continue // loopback interface
+			// loopback interface
+			continue
 		}
 		addrs, err := iface.Addrs()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for _, addr := range addrs {
 			var ip net.IP
+			// check the type
 			switch v := addr.(type) {
 			case *net.IPNet:
 				ip = v.IP
@@ -43,26 +49,34 @@ func getIPAddressOfHost() (*net.IP, error) {
 				ip = v.IP
 			}
 			if ip == nil || ip.IsLoopback() {
+				// If Loopback IP i.e. addresses like 127.*.*.*
 				continue
 			}
+			// convert address to 4-byte form
 			ip = ip.To4()
 			if ip == nil {
-				continue // not an ipv4 address
+				// not a valid IPv4 address
+				continue
 			}
-			return &ip, nil
+			for i, val := range ip {
+				hostIP[i] = val
+			}
+			return nil
 		}
 	}
-	return nil, errors.New("Not Connected To Network")
+	return errors.New("Not Connected To Network")
 }
 
-func NewConnectRequest() (*ConnectRequest, error) {
-	ip, err := getIPAddressOfHost()
+func NewConnectRequest() *ConnectRequest {
+	var hostIP [4]byte
+	err := getIPAddressOfHost(hostIP[0:])
+	// If external IP of the host is not found then return err
 	if err != nil {
-		return nil, err
+		panic("Error Fetching Valid IP Address")
 	}
 	return &ConnectRequest{
-		messageId: time.Now().Unix(),
-		agentIP:   *ip,
-		agentPort: 6969,
-	}, nil
+		MessageId: time.Now().Unix(),
+		AgentIP:   hostIP,
+		AgentPort: 6969,
+	}
 }

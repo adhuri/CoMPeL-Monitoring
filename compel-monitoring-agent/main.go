@@ -2,26 +2,36 @@ package main
 
 import "net"
 import "fmt"
-import "bufio"
-import "time"
-import github.com/adhuri/Compel-Monitoring/protocol "protocol"
 
-func validateResponse(ackReply string, connectMessage string) bool {
+import "time"
+import "encoding/binary"
+import monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
+
+func validateResponse(connectMessage monitorProtocol.ConnectRequest, ack monitorProtocol.ConnectReply) bool {
 	// validate the response from the server
 	return true
 }
 
-func generateInitMessage() string {
-	return "1\n"
+func generateInitMessage() *monitorProtocol.ConnectRequest {
+	return monitorProtocol.NewConnectRequest()
 }
+
 func sendInitMessage(conn net.Conn) {
 	//send init message to server
-	connectMessage := generateInitMessage()
-	fmt.Fprintf(conn, connectMessage)
+	connectMessage := *generateInitMessage()
+	binary.Write(conn, binary.LittleEndian, connectMessage)
+	//fmt.Fprintf(conn, connectMessage)
 	// read ack from the server
-	serverReply, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print("Message from server: " + serverReply)
-	validateResponse(serverReply, connectMessage)
+	serverReply := monitorProtocol.ConnectReply{}
+	err := binary.Read(conn, binary.LittleEndian, &serverReply)
+	if err != nil {
+		fmt.Println("ERROR : Bad Reply From Server" + err.Error())
+	} else {
+		fmt.Println("INFO: Reply Received")
+	}
+	//serverReply, _ := bufio.NewReader(conn).ReadString('\n')
+	//fmt.Print("Message from server: " + serverReply)
+	validateResponse(connectMessage, serverReply)
 }
 
 func main() {
