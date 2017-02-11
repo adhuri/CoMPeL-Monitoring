@@ -8,15 +8,13 @@ import (
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
 
-func main() {
-
-	ln, _ := net.Listen("tcp", ":8081")
-	conn, _ := ln.Accept()
-
+func handleConnectMessage(conn net.Conn) {
+	defer conn.Close()
 	connectMessage := monitorProtocol.ConnectRequest{}
 	err := binary.Read(conn, binary.LittleEndian, &connectMessage)
 	if err != nil {
 		fmt.Println("ERROR : Bad Message From Client" + err.Error())
+		return
 	} else {
 		fmt.Println("INFO: Connect Request Received")
 		fmt.Printf("%+v\n", connectMessage)
@@ -27,6 +25,25 @@ func main() {
 		AgentIP:       connectMessage.AgentIP,
 		IsSuccessfull: 1,
 	}
-	binary.Write(conn, binary.LittleEndian, connectAck)
+	err = binary.Write(conn, binary.LittleEndian, connectAck)
+	if err != nil {
+		return
+	}
+
+}
+
+func main() {
+
+	listener, err := net.Listen("tcp", ":8081")
+	if err != nil {
+		panic("Server Failed to Start")
+	}
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
+		go handleConnectMessage(conn)
+	}
 
 }
