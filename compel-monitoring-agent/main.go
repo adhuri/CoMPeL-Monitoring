@@ -20,7 +20,7 @@ func sendInitMessage(conn net.Conn) {
 	//send init message to server
 	connectMessage := *generateInitMessage()
 	binary.Write(conn, binary.LittleEndian, connectMessage)
-	//fmt.Fprintf(conn, connectMessage)
+
 	// read ack from the server
 	serverReply := monitorProtocol.ConnectReply{}
 	err := binary.Read(conn, binary.LittleEndian, &serverReply)
@@ -29,8 +29,8 @@ func sendInitMessage(conn net.Conn) {
 	} else {
 		fmt.Println("INFO: Reply Received")
 	}
-	//serverReply, _ := bufio.NewReader(conn).ReadString('\n')
-	//fmt.Print("Message from server: " + serverReply)
+
+	//validate server respose
 	validateResponse(connectMessage, serverReply)
 }
 

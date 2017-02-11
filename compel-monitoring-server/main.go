@@ -13,10 +13,6 @@ func main() {
 	ln, _ := net.Listen("tcp", ":8081")
 	conn, _ := ln.Accept()
 
-	// message, _ := bufio.NewReader(conn).ReadString('\n')
-	// fmt.Print("Message Received:", string(message))
-	// newmessage := "2"
-	// conn.Write([]byte(newmessage + "\n"))
 	connectMessage := monitorProtocol.ConnectRequest{}
 	err := binary.Read(conn, binary.LittleEndian, &connectMessage)
 	if err != nil {
