@@ -82,4 +82,29 @@ func main() {
 			}
 		}
 	}
+
+	udpAddr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:8081")
+	if err != nil {
+		fmt.Println("Error in Resolving Address " + err.Error())
+		return
+	}
+	conn, err := net.DialUDP("udp", nil, udpAddr)
+	if err != nil {
+		fmt.Println("Error in Resolving Address")
+		return
+	}
+
+	_, err = conn.Write([]byte("Hello Server!"))
+	if err != nil {
+		fmt.Println("Error in Resolving Address")
+		return
+	}
+
+	var buf [512]byte
+	n, err := conn.Read(buf[0:])
+	if err != nil {
+		fmt.Println("Error")
+	}
+
+	fmt.Println(string(buf[0:n]))
 }

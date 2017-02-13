@@ -62,11 +62,46 @@ func tcpListener(wg *sync.WaitGroup) {
 	}
 }
 
+func handleMonitorMessage(conn *net.UDPConn) {
+	var buf [10000]byte
+
+	n, addr, err := conn.ReadFromUDP(buf[0:])
+	if err != nil {
+		return
+	}
+	fmt.Println(string(buf[0:n]))
+
+	conn.WriteToUDP([]byte("Hello Client"), addr)
+
+}
+
+func udpListener(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	udpAddr, err := net.ResolveUDPAddr("udp4", ":8081")
+	if err != nil {
+		fmt.Println("Error in Resolving Address " + err.Error())
+		panic("Unable to Start UDP Service on server")
+	}
+	conn, err := net.ListenUDP("udp", udpAddr)
+	if err != nil {
+		panic("Unable to Start UDP Service on server")
+	}
+
+	for {
+		handleMonitorMessage(conn)
+	}
+
+}
+
 func main() {
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
+
 	go tcpListener(&wg)
+	go udpListener(&wg)
+
 	wg.Wait()
 
 }
