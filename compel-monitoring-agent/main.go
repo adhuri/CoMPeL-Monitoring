@@ -2,19 +2,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"strconv"
-	"time"
 
 	runc "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
 
-func worker(index int, containerStats chan string) {
-	time.Sleep(time.Second * 3)
-
-	stats := " # Container " + strconv.Itoa(index)
-	fmt.Println(stats)
+func worker(containerId string, containerStats chan string) {
+	stats := runc.GetContainerStats(containerId)
 	containerStats <- stats
 }
 
@@ -23,11 +17,12 @@ func main() {
 	go monitorProtocol.ConnectToServer(done)
 	<-done
 
-	numOfWorkers := runc.NumberOfRunningContaiers()
+	var containers []string = runc.GetRunningContaiers()
+	numOfWorkers := len(containers)
 
 	containerStats := make(chan string, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
-		go worker(i, containerStats)
+		go worker(containers[i], containerStats)
 	}
 
 	var buffer bytes.Buffer
