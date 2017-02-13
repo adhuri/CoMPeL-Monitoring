@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"time"
 
 	runc "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
@@ -12,11 +13,7 @@ func worker(containerId string, containerStats chan string) {
 	containerStats <- stats
 }
 
-func main() {
-	done := make(chan bool)
-	go monitorProtocol.ConnectToServer(done)
-	<-done
-
+func sendStats() {
 	var containers []string = runc.GetRunningContaiers()
 	numOfWorkers := len(containers)
 
@@ -32,5 +29,16 @@ func main() {
 	stringToSend := buffer.String()
 
 	monitorProtocol.SendContainerStatistics(stringToSend)
+}
+
+func main() {
+	monitorProtocol.ConnectToServer()
+	statsTimer := time.NewTicker(time.Second * 2).C
+	for {
+		select {
+		case <-statsTimer:
+			sendStats()
+		}
+	}
 
 }

@@ -41,8 +41,7 @@ func sendInitMessage(conn net.Conn) error {
 	return nil
 }
 
-func ConnectToServer(done chan bool) {
-	defer close(done)
+func ConnectToServer() {
 	// Try connecting to the monitoring server
 	// If connection fails try reconnecting after 3 seconds again
 	connectedToServer := false
