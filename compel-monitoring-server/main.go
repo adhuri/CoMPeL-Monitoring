@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"sync"
 
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
@@ -41,7 +42,8 @@ func handleConnectMessage(conn net.Conn) {
 
 }
 
-func main() {
+func tcpListener(wg *sync.WaitGroup) {
+	defer wg.Done()
 	// Server listens on all interfaces for TCP connestion
 	listener, err := net.Listen("tcp", ":8081")
 	if err != nil {
@@ -58,5 +60,13 @@ func main() {
 		}
 		go handleConnectMessage(conn)
 	}
+}
+
+func main() {
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go tcpListener(&wg)
+	wg.Wait()
 
 }
