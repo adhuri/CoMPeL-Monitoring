@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
@@ -54,7 +56,8 @@ func sendInitMessage(conn net.Conn) error {
 	return nil
 }
 
-func main() {
+func connectToServer(done chan bool) {
+	defer close(done)
 	// Try connecting to the monitoring server
 	// If connection fails try reconnecting after 3 seconds again
 	connectedToServer := false
@@ -74,7 +77,7 @@ func main() {
 			if err != nil {
 				// Connect Protocol failed midway; Retry
 				fmt.Println("\n Try Reconnecting to server")
-				conn.Close()
+				defer conn.Close()
 			} else {
 				// Client Registration successful
 				fmt.Println("\n Connected to Server")
@@ -82,7 +85,9 @@ func main() {
 			}
 		}
 	}
+}
 
+func sendMonitorPackets(stringToSend string) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:8081")
 	if err != nil {
 		fmt.Println("Error in Resolving Address " + err.Error())
@@ -94,7 +99,7 @@ func main() {
 		return
 	}
 
-	_, err = conn.Write([]byte("Hello Server!"))
+	_, err = conn.Write([]byte(stringToSend))
 	if err != nil {
 		fmt.Println("Error in Resolving Address")
 		return
@@ -107,4 +112,42 @@ func main() {
 	}
 
 	fmt.Println(string(buf[0:n]))
+
+}
+
+func numberOfContaiers() int {
+	return 4
+}
+
+func worker(index int, containerStats chan string) {
+	time.Sleep(time.Second * 3)
+
+	stats := " # Container " + strconv.Itoa(index)
+	fmt.Println(stats)
+	containerStats <- stats
+}
+
+func main() {
+	done := make(chan bool)
+	go connectToServer(done)
+	<-done
+
+	numOfWorkers := numberOfContaiers()
+
+	containerStats := make(chan string, numOfWorkers)
+	for i := 0; i < numOfWorkers; i++ {
+		go worker(i, containerStats)
+	}
+
+	var buffer bytes.Buffer
+
+	for i := 0; i < numOfWorkers; i++ {
+		buffer.WriteString(<-containerStats)
+	}
+
+	stringToSend := buffer.String()
+
+	fmt.Println(stringToSend)
+	sendMonitorPackets(stringToSend)
+
 }
