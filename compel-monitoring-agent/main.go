@@ -14,7 +14,7 @@ func worker(containerId string, containerStats chan string) {
 }
 
 func sendStats() {
-	var containers []string = runc.GetRunningContaiers()
+	var containers []string = runc.GetRunningContainers()
 	numOfWorkers := len(containers)
 
 	containerStats := make(chan string, numOfWorkers)
