@@ -16,7 +16,6 @@ func worker(containerId string, containerStats chan string) {
 func sendStats() {
 	var containers []string = runc.GetRunningContainers()
 	numOfWorkers := len(containers)
-
 	containerStats := make(chan string, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
 		go worker(containers[i], containerStats)
