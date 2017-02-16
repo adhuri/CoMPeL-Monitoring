@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"net"
+	"time"
+	"log"
 )
 
 func GetIPAddressOfHost(hostIP []byte) error {
@@ -64,4 +66,10 @@ func GetIPAddressOfHost(hostIP []byte) error {
 
 func IpToString(hostIP []byte) string {
 	return string(hostIP[0]) + string(hostIP[1]) + string(hostIP[2]) + string(hostIP[3])
+}
+// Time any function in the repository - 
+// Usage - defer utils.TimeTrack(time.Now(), "Filename.go-FunctionName")
+func TimeTrack(start time.Time, name string) {
+    elapsed := time.Since(start)
+        log.Printf("%s took %s", name, elapsed)
 }

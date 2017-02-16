@@ -6,6 +6,8 @@ import (
 "os/exec"
 "os"
 "strings"
+"time"
+utils "github.com/adhuri/Compel-Monitoring/utils"
 )
 
 
@@ -13,6 +15,10 @@ import (
 
 func GetRunningContainers() []string {
 	
+	//Track time using utils
+
+	defer utils.TimeTrack(time.Now(), "Handlers.go-GetRunningContainers")
+
 	//Defining byte buffer to store the output
 	var (
 			cmdOut []byte
@@ -40,7 +46,7 @@ func GetRunningContainers() []string {
 		return make([]string , 0 ) }
 	// Since it contains "\n" 
 
-	fmt.Println(" Containers running " , containerList, len(containerList))
+	fmt.Println(" Containers running " , containerList, len(containerList)-1)
 	return containerList[0:len(containerList)]
 
 	//return make([]string, 4)
