@@ -47,11 +47,29 @@ func GetRunningContainers() []string {
 	// Since it contains "\n" 
 
 	fmt.Println(" Containers running " , containerList, len(containerList)-1)
-	return containerList[0:len(containerList)]
+	return containerList[0:len(containerList)-1]
 
 	//return make([]string, 4)
 }
 
 func GetContainerStats(containerId string) string {
-	return containerId
+	
+	//Timing this function
+	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
+	//Testing JSON parsing
+	//runc events container2 --stats
+	
+	var (
+	cmdOut []byte
+	err    error
+	)
+
+	cmdName := "runc events "+containerId+" --stats"
+	//fmt.Println("Running command ",cmdName)
+	if cmdOut, err = exec.Command("/bin/sh","-c",cmdName).Output(); err != nil {
+	fmt.Fprintln(os.Stderr, "There was an error running runc events ", err)
+	}
+	statsJSON := string(cmdOut)
+
+	return statsJSON
 }

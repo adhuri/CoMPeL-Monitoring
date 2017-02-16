@@ -17,7 +17,6 @@ func worker(client Client, containerId string, containerStats chan string, curre
 func sendStats(client Client, counter uint64) {
 	var containers []string = runc.GetRunningContaiers()
 	numOfWorkers := len(containers)
-
 	containerStats := make(chan string, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
 		client.UpdateContainerCounter(containers[i], counter)
