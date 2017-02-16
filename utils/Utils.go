@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"net"
+	"time"
+	"log"
 )
 
 func GetIPAddressOfHost(hostIP []byte) error {
@@ -60,4 +62,12 @@ func GetIPAddressOfHost(hostIP []byte) error {
 
 	// If no interface is connected to the network
 	return errors.New("Not Connected To Network")
+}
+
+
+// Time any function in the repository - 
+// Usage - defer utils.TimeTrack(time.Now(), "Filename.go-FunctionName")
+func TimeTrack(start time.Time, name string) {
+    elapsed := time.Since(start)
+        log.Printf("%s took %s", name, elapsed)
 }
