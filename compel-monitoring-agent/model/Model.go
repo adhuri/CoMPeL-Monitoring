@@ -21,6 +21,15 @@ type Client struct {
 	totalCPU        string
 }
 
+func NewClient() *Client {
+	return &Client{
+		containerStats:  make(map[string]string),
+		containerStatus: make(map[string]uint64),
+		totalMemory:     "",
+		totalCPU:        "",
+	}
+}
+
 // This method accepts container ID and statType
 // It returns the value of the stats for the contianer
 // It aquires a reader lock before reading the map
