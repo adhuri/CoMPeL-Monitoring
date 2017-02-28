@@ -9,18 +9,18 @@ import (
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
 
-func worker(client Client, containerId string, containerStats chan string, currentCounter uint64) {
+func worker(client model.Client, containerId string, containerStats chan string, currentCounter uint64) {
 	stats := runc.GetContainerStats(containerId)
 	containerStats <- stats
 }
 
-func sendStats(client Client, counter uint64) {
-	var containers []string = runc.GetRunningContaiers()
+func sendStats(client model.Client, counter uint64) {
+	var containers []string = runc.GetRunningContainers()
 	numOfWorkers := len(containers)
 	containerStats := make(chan string, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
 		client.UpdateContainerCounter(containers[i], counter)
-		go worker(containers[i], containerStats, counter)
+		go worker(client,containers[i], containerStats, counter)
 	}
 
 	var buffer bytes.Buffer
@@ -33,7 +33,7 @@ func sendStats(client Client, counter uint64) {
 }
 
 func main() {
-	client := new(model.Client)
+	client := *new(model.Client)
 	var counter uint64 = 0
 	monitorProtocol.ConnectToServer()
 	statsTimer := time.NewTicker(time.Second * 2).C
