@@ -12,9 +12,10 @@ var BLKIO_STATS = statType{"BLKIO"}
 
 type Client struct {
 	sync.RWMutex
-	contianerStats map[string]string
-	totalMemory    string
-	totalCPU       string
+	contianerStats  map[string]string
+	containerStatus map[string]int64
+	totalMemory     string
+	totalCPU        string
 }
 
 // This method accepts container ID and statType
@@ -67,4 +68,19 @@ func (client *Client) SetTotalCPUStats(value string) {
 	client.Lock()
 	defer client.Unlock()
 	client.totalCPU = value
+}
+
+// Return True if the container stats were recorded in previous cycle
+// We match the current counter with the counter of the container
+func (client *Client) IsContainerAlive(containerId string, currentCounter uint64) bool {
+	client.RLock()
+	defer client.RUnlock()
+	return (currentCounter-client.containerStatus[containerId] <= 1)
+}
+
+// We update the counter value everytime we send the stats for the given container to the server
+func (client *Client) UpdateContainerCounter(containerId string, currentCounter uint64) {
+	client.Lock()
+	defer client.Unlock()
+	client.containerStatus[containerId] = currentCounter
 }
