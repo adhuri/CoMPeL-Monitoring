@@ -1,9 +1,12 @@
 package model
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 type statType struct {
-	string statName
+	statName string
 }
 
 var CPU_STATS = statType{"CPU"}
@@ -12,8 +15,8 @@ var BLKIO_STATS = statType{"BLKIO"}
 
 type Client struct {
 	sync.RWMutex
-	contianerStats  map[string]string
-	containerStatus map[string]int64
+	containerStats  map[string]string
+	containerStatus map[string]uint64
 	totalMemory     string
 	totalCPU        string
 }
@@ -25,11 +28,11 @@ func (client *Client) GetStats(containerId string, stat statType) (string, error
 	key := containerId + stat.statName
 	client.RLock()
 	defer client.RUnlock()
-	value, present = contianerStats[key]
+	value, present := client.containerStats[key]
 	if present {
 		return value, nil
 	} else {
-		return nil, error.New("Value not present")
+		return "", errors.New("Value not present")
 	}
 }
 
@@ -39,7 +42,7 @@ func (client *Client) SetStats(stat statType, containerId string, value string) 
 	key := containerId + stat.statName
 	client.Lock()
 	defer client.Unlock()
-	contianerStats[key] = value
+	client.containerStats[key] = value
 }
 
 // returns total memory used by all the containers
