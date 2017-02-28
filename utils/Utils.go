@@ -61,3 +61,7 @@ func GetIPAddressOfHost(hostIP []byte) error {
 	// If no interface is connected to the network
 	return errors.New("Not Connected To Network")
 }
+
+func IpToString(hostIP []byte) string {
+	return string(hostIP[0]) + string(hostIP[1]) + string(hostIP[2]) + string(hostIP[3])
+}
