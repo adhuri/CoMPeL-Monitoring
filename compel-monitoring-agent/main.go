@@ -23,7 +23,7 @@ func sendStats(client *model.Client, counter uint64) {
 	if err != nil {
 		fmt.Println("Error : cannot GetSystemCPU")
 	} else {
-		client.SetTotalCPUStats(sysCPUusage)
+		client.SetTotalCPU(sysCPUusage)
 	}
 	//Set Memory Limit
 	sysMemoryLimit, err := stats.GetSystemMemory()
