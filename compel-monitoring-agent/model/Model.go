@@ -10,23 +10,20 @@ type statType struct {
 }
 
 var CPU_STATS = statType{"CPU"}
-var MEM_STATS = statType{"MEMORY"}
-var BLKIO_STATS = statType{"BLKIO"}
 
 type Client struct {
 	sync.RWMutex
 	containerStats  map[string]string
 	containerStatus map[string]uint64
-	totalMemory     string
-	totalCPU        string
+	totalCPU        uint64
+	totalMemory     uint64
 }
 
 func NewClient() *Client {
 	return &Client{
 		containerStats:  make(map[string]string),
 		containerStatus: make(map[string]uint64),
-		totalMemory:     "",
-		totalCPU:        "",
+		totalCPU:        0,
 	}
 }
 
@@ -54,32 +51,32 @@ func (client *Client) SetStats(stat statType, containerId string, value string) 
 	client.containerStats[key] = value
 }
 
-// returns total memory used by all the containers
-func (client *Client) GetTotalMemStats() string {
-	client.RLock()
-	defer client.RUnlock()
-	return client.totalMemory
-}
-
 // return total CPU cycles usued by all containers
-func (client *Client) GetTotalCPUStats() string {
+func (client *Client) GetTotalCPUStats() uint64 {
 	client.RLock()
 	defer client.RUnlock()
 	return client.totalCPU
 }
 
-// sets total memory used by all the containers
-func (client *Client) SetTotalMemStats(value string) {
-	client.Lock()
-	defer client.Unlock()
-	client.totalMemory = value
-}
-
 // sets total CPU cycles used by all the containers
-func (client *Client) SetTotalCPUStats(value string) {
+func (client *Client) SetTotalCPUStats(value uint64) {
 	client.Lock()
 	defer client.Unlock()
 	client.totalCPU = value
+}
+
+// return total Memory limit
+func (client *Client) GetTotalMemory() uint64 {
+	client.RLock()
+	defer client.RUnlock()
+	return client.totalMemory
+}
+
+// sets total Memory Limit
+func (client *Client) SetTotalMemory(value uint64) {
+	client.Lock()
+	defer client.Unlock()
+	client.totalMemory = value
 }
 
 // Return True if the container stats were recorded in previous cycle

@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
+	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
+	stats "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 	utils "github.com/adhuri/Compel-Monitoring/utils"
 )
@@ -53,11 +54,16 @@ func GetRunningContainers() []string {
 	//return make([]string, 4)
 }
 
-func GetContainerStats(containerID string) string {
+func GetContainerStats(client *model.Client, containerID string) string {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
-	message := monitorProtocol.EncodeStatsJSON(containerID, "0", strconv.FormatFloat(stats.CalculateMemoryUsed(containerID), 'f', -1, 32))
+	//Calculating Memory Used
+	memoryPercentage := strconv.FormatFloat(stats.CalculateMemoryUsed(client, containerID), 'f', -1, 32)
+
+	//Calculatin CPU Used
+
+	message := monitorProtocol.EncodeStatsJSON(containerID, "0", memoryPercentage)
 	return string(message)
 }
