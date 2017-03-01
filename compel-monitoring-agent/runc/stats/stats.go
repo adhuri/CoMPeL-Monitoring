@@ -193,7 +193,7 @@ func CalculateCPUUsedPercentage(client *model.Client, containerID string) float6
 		client.SetStats(model.CPU_STATS, containerID, newContainerCPU)
 		return cpuPercent
 	}
-	cpuDelta := float64(oldContainerCPU) - float64(newContainerCPU)
+	cpuDelta := float64(newContainerCPU) - float64(oldContainerCPU)
 	//Updating for next iteration currentContainerCPU to oldContainerCPU
 	client.SetStats(model.CPU_STATS, containerID, newContainerCPU)
 
@@ -203,7 +203,7 @@ func CalculateCPUUsedPercentage(client *model.Client, containerID string) float6
 		// First Time running
 		return cpuPercent
 	}
-	systemDelta := float64(oldSystemCPU) - float64(newSystemCPU)
+	systemDelta := float64(newSystemCPU) - float64(oldSystemCPU)
 
 	if systemDelta > 0.0 && cpuDelta > 0.0 {
 		cpuPercent = (cpuDelta / systemDelta) * 100.0 // Need to find number of cores - float64(len(v.CPUStats.CPUUsage.PercpuUsage))
