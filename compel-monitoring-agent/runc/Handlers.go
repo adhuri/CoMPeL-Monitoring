@@ -1,75 +1,63 @@
 package runc
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
 
-"fmt"
-"os/exec"
-"os"
-"strings"
-"time"
-utils "github.com/adhuri/Compel-Monitoring/utils"
+	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
+	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
+	utils "github.com/adhuri/Compel-Monitoring/utils"
 )
 
-
-// Function to get running containers ; Returns empty list if no container running
-
+// GetRunningContainers ... Function to get running containers ; Returns empty list if no container running
 func GetRunningContainers() []string {
-	
+
 	//Track time using utils
 
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetRunningContainers")
 
 	//Defining byte buffer to store the output
 	var (
-			cmdOut []byte
-			err    error
+		cmdOut []byte
+		err    error
 	)
 
 	// Getting all containers having status = running
 
-	status:="running"
+	status := "running"
 	// Command to process the list of containers - returns each container name with \n seperated
-	command := "runc list|grep "+ status +"| cut -d\" \" -f1"
-	
+	command := "runc list|grep " + status + "| cut -d\" \" -f1"
+
 	//Requires /bin/sh due to sudo permissions
-	cmd := exec.Command("/bin/sh","-c",command) 
-	
+	cmd := exec.Command("/bin/sh", "-c", command)
 
 	if cmdOut, err = cmd.Output(); err != nil {
 		fmt.Fprintln(os.Stderr, "There was an error in GetRunningContainers()- run list ", err)
 	}
-	containerList := strings.Split(string(cmdOut),"\n")
+	containerList := strings.Split(string(cmdOut), "\n")
 
 	//Empty list
 	if len(containerList) == 1 {
-		fmt.Println( " No container running ")
-		return make([]string , 0 ) }
-	// Since it contains "\n" 
+		fmt.Println(" No container running ")
+		return make([]string, 0)
+	}
+	// Since it contains "\n"
 
-	fmt.Println(" Containers running " , containerList, len(containerList)-1)
-	return containerList[0:len(containerList)-1]
+	fmt.Println(" Containers running ", containerList, len(containerList)-1)
+	return containerList[0 : len(containerList)-1]
 
 	//return make([]string, 4)
 }
 
-func GetContainerStats(containerId string) string {
-	
+func GetContainerStats(containerID string) string {
+
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
-	//Testing JSON parsing
-	//runc events container2 --stats
-	
-	var (
-	cmdOut []byte
-	err    error
-	)
 
-	cmdName := "runc events "+containerId+" --stats"
-	//fmt.Println("Running command ",cmdName)
-	if cmdOut, err = exec.Command("/bin/sh","-c",cmdName).Output(); err != nil {
-	fmt.Fprintln(os.Stderr, "There was an error running runc events ", err)
-	}
-	statsJSON := string(cmdOut)
-
-	return statsJSON
+	message := monitorProtocol.EncodeStatsJSON(containerID, "0", strconv.FormatFloat(stats.CalculateMemoryUsed(containerID), 'f', -1, 32))
+	return string(message)
 }
