@@ -100,9 +100,9 @@ func GetSystemMemory() (uint64, error) {
 	return totalmemory, nil
 }
 
-//CalculateMemoryUsed %Memory Used by the container
-func CalculateMemoryUsed(client *model.Client, containerID string) (memorypercent float64) {
-
+//CalculateMemoryPercentage %Memory Used by the container
+func CalculateMemoryPercentage(client *model.Client, containerID string) (memorypercent float64) {
+	defer utils.TimeTrack(time.Now(), "Stats.go-CalculateMemoryPercentage")
 	//cmemory := getContainerMemory(containerID)
 	cmemory := getContainerMemory(containerID)
 	tmemory := client.GetTotalMemory() // Might return 0 if not set due to some issue. Log printed
@@ -145,12 +145,12 @@ func getContainerCPU(container string) (cpuused int64) {
 }
 
 //GetSystemCPU Total CPU for the system using cgroups from /sys/fs/cgroup/memory/user.slice/<containerName>/memory.stat
-func GetSystemCPU() (uint64, error) {
+func GetSystemCPU() (int64, error) {
 	//Using Docker code from https://github.com/docker/docker/blob/cd6a61f1b17830464250406244ed8ef113db8a3c/daemon/stats/collector_unix.go
 	defer utils.TimeTrack(time.Now(), "Stats.go-GetSystemCPU")
 	const nanoSecondsPerSecond = 1e9
 
-	clockTicksPerSecond := uint64(system.GetClockTicks())
+	clockTicksPerSecond := int64(system.GetClockTicks())
 	contents, err := ioutil.ReadFile("/proc/stat")
 	if err != nil {
 		fmt.Print("ERROR : Unable to read /proc/meminfo")
@@ -165,9 +165,9 @@ func GetSystemCPU() (uint64, error) {
 				if len(parts) < 8 {
 					return 0, fmt.Errorf("invalid number of cpu fields")
 				}
-				var totalClockTicks uint64
+				var totalClockTicks int64
 				for _, i := range parts[1:8] {
-					v, err := strconv.ParseUint(i, 10, 64)
+					v, err := strconv.ParseInt(i, 10, 64)
 					if err != nil {
 						return 0, fmt.Errorf("Unable to convert value %s to int: %s", i, err)
 					}
@@ -178,4 +178,40 @@ func GetSystemCPU() (uint64, error) {
 		}
 	}
 	return 0, fmt.Errorf("invalid stat format. Error trying to parse the '/proc/stat' file")
+}
+
+//CalculateCPUUsedPercentage %Memory Used by the container
+func CalculateCPUUsedPercentage(client *model.Client, containerID string) float64 {
+	//Modified From  https://github.com/docker/docker/blob/131e2bf12b2e1b3ee31b628a501f96bbb901f479/api/client/stats.go#L309
+	defer utils.TimeTrack(time.Now(), "Stats.go-CalculateCPUUsedPercentage")
+	cpuPercent := 0.0
+	// calculate the change for the cpu usage of the container in between readings
+	newContainerCPU := getContainerCPU(containerID)
+	oldContainerCPU, err := client.GetStats(containerID, model.CPU_STATS)
+	if err != nil {
+		// First Time running
+		client.SetStats(model.CPU_STATS, containerID, newContainerCPU)
+		return cpuPercent
+	}
+	cpuDelta := float64(oldContainerCPU) - float64(newContainerCPU)
+	//Updating for next iteration currentContainerCPU to oldContainerCPU
+	client.SetStats(model.CPU_STATS, containerID, newContainerCPU)
+
+	// calculate the change for the entire system between readings
+	oldSystemCPU, newSystemCPU, err := client.GetTotalCPU()
+	if err != nil {
+		// First Time running
+		return cpuPercent
+	}
+	systemDelta := float64(oldSystemCPU) - float64(newSystemCPU)
+
+	if systemDelta > 0.0 && cpuDelta > 0.0 {
+		cpuPercent = (cpuDelta / systemDelta) * 100.0 // Need to find number of cores - float64(len(v.CPUStats.CPUUsage.PercpuUsage))
+	}
+	fmt.Printf("\n oldContainerCPU  %d, newContainerCPU %d \n", oldContainerCPU, newContainerCPU)
+	fmt.Printf("\n oldSystemCPU  %d, newSystemCPU %d \n", oldSystemCPU, newSystemCPU)
+	fmt.Printf("\n cpuDelta  %f, systemDelta %f \n", cpuDelta, systemDelta)
+
+	return cpuPercent
+
 }

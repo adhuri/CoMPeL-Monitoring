@@ -60,7 +60,7 @@ func GetContainerStats(client *model.Client, containerID string) string {
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
-	memoryPercentage := strconv.FormatFloat(stats.(client, containerID), 'f', -1, 32)
+	memoryPercentage := strconv.FormatFloat(stats.CalculateMemoryPercentage(client, containerID), 'f', -1, 32)
 
 	//Calculating CPU Used
 	cpuPercentage := strconv.FormatFloat(stats.CalculateCPUUsedPercentage(client, containerID), 'f', -1, 32)
