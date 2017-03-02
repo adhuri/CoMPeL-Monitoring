@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"fmt"
 	"time"
 
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
@@ -23,13 +23,16 @@ func sendStats(client *model.Client, counter uint64) {
 		go worker(client, containers[i], containerStats, counter)
 	}
 
-	var buffer bytes.Buffer
+	//var buffer bytes.Buffer
+	var statsToSend = make([]string, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
-		buffer.WriteString(<-containerStats)
+		//buffer.WriteString(<-containerStats)
+		statsToSend[i] = <-containerStats
+		fmt.Println("############### " + statsToSend[i])
 	}
-	stringToSend := buffer.String()
+	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(stringToSend)
+	monitorProtocol.SendContainerStatistics(statsToSend)
 }
 
 func main() {

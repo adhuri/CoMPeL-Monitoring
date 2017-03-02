@@ -1,7 +1,9 @@
 package protocol
 
 import (
+	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"net"
@@ -71,8 +73,8 @@ func ConnectToServer() {
 	}
 }
 
-func SendContainerStatistics(stringToSend string) {
-	udpAddr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:8081")
+func SendContainerStatistics(stringToSend []string) {
+	udpAddr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:7071")
 	if err != nil {
 		fmt.Println("Error in Resolving Address " + err.Error())
 		return
@@ -83,18 +85,65 @@ func SendContainerStatistics(stringToSend string) {
 		return
 	}
 
-	_, err = conn.Write([]byte(stringToSend))
-	if err != nil {
-		fmt.Println("Error in Resolving Address")
-		return
+	// construct a StatsMessage
+	var buffer bytes.Buffer
+	//data := ""
+	startPointer := 0
+	endPointer := 0
+	for i := 0; i < len(stringToSend); i++ {
+		buffer.WriteString(stringToSend[i])
+		if buffer.Len() <= 8000 {
+			endPointer++
+			fmt.Println(endPointer)
+		} else {
+			statsMessage := *NewStatsMessage(stringToSend[startPointer:endPointer])
+			var buf bytes.Buffer
+			if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
+				// handle error
+				fmt.Println("Error in Encoding the StatMessage using GOB Encoder")
+				return
+			}
+			_, err := conn.Write(buf.Bytes())
+			//
+			// // Send StatsMessage
+			// _, err = conn.Write([]byte(stringToSend))
+			if err != nil {
+				fmt.Println("Error in Resolving Address")
+				return
+			}
+			startPointer = endPointer
+			buffer.Reset()
+			buffer.WriteString(stringToSend[i])
+			endPointer++
+		}
 	}
 
-	var buf [512]byte
-	n, err := conn.Read(buf[0:])
-	if err != nil {
-		fmt.Println("Error")
+	if startPointer < len(stringToSend) {
+
+		statsMessage := *NewStatsMessage(stringToSend[startPointer:])
+		var buf bytes.Buffer
+		if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
+			// handle error
+			fmt.Println("Error in Encoding the StatMessage using GOB Encoder")
+			return
+		}
+		_, err := conn.Write(buf.Bytes())
+		//
+		// // Send StatsMessage
+		// _, err = conn.Write([]byte(stringToSend))
+		if err != nil {
+			fmt.Println("Error in Resolving Address")
+			return
+		}
+
 	}
 
-	fmt.Println(string(buf[0:n]))
+	// var buf [512]byte
+	// n, err := conn.Read(buf[0:])
+	// if err != nil {
+	// 	fmt.Println("Error")
+	// }
+	//
+	// fmt.Println(string(buf[0:n]))
 
 }

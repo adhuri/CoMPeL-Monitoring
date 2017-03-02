@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"net"
 	"sync"
@@ -67,18 +69,30 @@ func handleMonitorMessage(conn *net.UDPConn) {
 
 	n, addr, err := conn.ReadFromUDP(buf[0:])
 	if err != nil {
+		fmt.Println("Error Reading from UDP socket")
 		return
 	}
-	fmt.Println(string(buf[0:n]))
+	//fmt.Println(string(buf[0:n]))
+	var statsMessage monitorProtocol.StatsMessage
+	if err := gob.NewDecoder(bytes.NewReader(buf[0:n])).Decode(&statsMessage); err != nil {
+		// handle error
+		fmt.Println("Error Decoding at Server")
+		return
+	}
+	//fmt.Printf("%q: {%s,%v}\n", statsMessage.MessageId, utils.IpToString(statsMessage.AgentIP[0:]), statsMessage.Data)
+	fmt.Println(statsMessage.MessageId)
+	//fmt.Println(utils.IpToString(statsMessage.AgentIP[0:]))
+	fmt.Println(statsMessage.Data)
+	fmt.Println(addr)
 
-	conn.WriteToUDP([]byte("Hello Client"), addr)
+	//conn.WriteToUDP([]byte("Hello Client"), addr)
 
 }
 
 func udpListener(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	udpAddr, err := net.ResolveUDPAddr("udp4", ":8081")
+	udpAddr, err := net.ResolveUDPAddr("udp4", ":7071")
 	if err != nil {
 		fmt.Println("Error in Resolving Address " + err.Error())
 		panic("Unable to Start UDP Service on server")
