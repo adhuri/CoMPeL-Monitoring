@@ -1,30 +1,34 @@
 package protocol
 
-import "time"
-import utils "github.com/adhuri/Compel-Monitoring/utils"
+import (
+	"net"
+	"time"
+
+	utils "github.com/adhuri/Compel-Monitoring/utils"
+)
 
 type ConnectRequest struct {
 	MessageId int64
-	AgentIP   [4]byte
+	AgentIP   net.IP
 	AgentPort uint16
 }
 
 type ConnectReply struct {
 	MessageId     int64
-	AgentIP       [4]byte
+	AgentIP       net.IP
 	IsSuccessfull uint8
 }
 
 func ValidateResponse(connectMessage ConnectRequest, ConnectAck ConnectReply) bool {
 	// validate the response from the server
 	// verify if the messageID of request and response is same and even the host
-	return connectMessage.AgentIP == ConnectAck.AgentIP && connectMessage.MessageId == ConnectAck.MessageId
+	return utils.CheckIPAddressesEqual(connectMessage.AgentIP, ConnectAck.AgentIP) && connectMessage.MessageId == ConnectAck.MessageId
 }
 
 func NewConnectRequest() *ConnectRequest {
 	// Get External IP of host
-	var hostIP [4]byte
-	err := utils.GetIPAddressOfHost(hostIP[0:])
+	//var hostIP [4]byte
+	hostIP, err := utils.GetIPAddressOfHost()
 	// If external IP of the host is not found then panic
 	if err != nil {
 		panic("Error Fetching Valid IP Address")

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"net"
@@ -17,7 +16,9 @@ func handleConnectMessage(conn net.Conn) {
 
 	// Read the ConnectRequest
 	connectMessage := monitorProtocol.ConnectRequest{}
-	err := binary.Read(conn, binary.LittleEndian, &connectMessage)
+	decoder := gob.NewDecoder(conn)
+	err := decoder.Decode(&connectMessage)
+	//err := binary.Read(conn, binary.LittleEndian, &connectMessage)
 	if err != nil {
 		// If failure in parsing, close the connection and return
 		fmt.Println("ERROR : Bad Message From Client" + err.Error())
@@ -36,7 +37,9 @@ func handleConnectMessage(conn net.Conn) {
 	}
 
 	// Send Connect Ack back to the client
-	err = binary.Write(conn, binary.LittleEndian, connectAck)
+	encoder := gob.NewEncoder(conn)
+	err = encoder.Encode(connectAck)
+	//err = binary.Write(conn, binary.LittleEndian, connectAck)
 	if err != nil {
 		// If failure in parsing, close the connection and return
 		return

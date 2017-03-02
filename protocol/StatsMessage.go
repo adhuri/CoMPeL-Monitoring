@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/adhuri/Compel-Monitoring/utils"
@@ -10,7 +11,7 @@ import (
 
 type StatsMessage struct {
 	MessageId int64
-	AgentIP   [4]byte
+	AgentIP   net.IP
 	Data      []string
 }
 
@@ -48,8 +49,8 @@ func EncodeStatsJSON(cID, cpu, memory string) []byte {
 func NewStatsMessage(dataToSend []string) *StatsMessage {
 
 	// Get External IP of host
-	var hostIP [4]byte
-	err := utils.GetIPAddressOfHost(hostIP[0:])
+	//var hostIP [4]byte
+	hostIP, err := utils.GetIPAddressOfHost()
 	// If external IP of the host is not found then panic
 	if err != nil {
 		panic("Error Fetching Valid IP Address")

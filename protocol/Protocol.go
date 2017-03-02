@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -13,15 +12,20 @@ import (
 func sendInitMessage(conn net.Conn) error {
 	// send init message to server
 	connectMessage := *NewConnectRequest()
-	err := binary.Write(conn, binary.LittleEndian, connectMessage)
+	encoder := gob.NewEncoder(conn)
+	err := encoder.Encode(connectMessage)
+	//err := binary.Write(conn, binary.LittleEndian, connectMessage)
 	if err != nil {
 		// If error occurs in sending a connect message to server then return
+		fmt.Printf("ERROR : Failure While Sending Data To Server " + err.Error())
 		return err
 	}
 
 	// read ack from the server
 	serverReply := ConnectReply{}
-	err = binary.Read(conn, binary.LittleEndian, &serverReply)
+	decoder := gob.NewDecoder(conn)
+	err = decoder.Decode(&serverReply)
+	// err = binary.Read(conn, binary.LittleEndian, &serverReply)
 	if err != nil {
 		// If error occurs while reading ACK from server then return
 		fmt.Println("ERROR : Bad Reply From Server" + err.Error())

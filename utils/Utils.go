@@ -2,16 +2,38 @@ package utils
 
 import (
 	"errors"
+	"log"
 	"net"
 	"time"
-	"log"
 )
 
-func GetIPAddressOfHost(hostIP []byte) error {
+func CheckIPAddressesEqual(ip1 net.IP, ip2 net.IP) bool {
+	if ip1 == nil && ip2 == nil {
+		return true
+	}
+
+	if ip1 == nil || ip2 == nil {
+		return false
+	}
+
+	if len(ip1) != len(ip2) {
+		return false
+	}
+
+	for i := range ip1 {
+		if ip1[i] != ip2[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func GetIPAddressOfHost() (net.IP, error) {
 	// Get all Interfaces
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Iterate over interface to find the right interface
@@ -27,7 +49,7 @@ func GetIPAddressOfHost(hostIP []byte) error {
 		addrs, err := iface.Addrs()
 		if err != nil {
 			// If the interface is up but ip has not been set
-			return err
+			return nil, err
 		}
 
 		// iterate over interface addresses
@@ -53,23 +75,25 @@ func GetIPAddressOfHost(hostIP []byte) error {
 			}
 
 			// Copy the 4 bytes of IP to the slice passed as argument
-			for i, val := range ip {
-				hostIP[i] = val
-			}
-			return nil
+			return ip, nil
+			// for i, val := range ip {
+			// 	hostIP[i] = val
+			// }
+			// return nil
 		}
 	}
 
 	// If no interface is connected to the network
-	return errors.New("Not Connected To Network")
+	return nil, errors.New("Not Connected To Network")
 }
 
 func IpToString(hostIP []byte) string {
 	return string(hostIP[0]) + string(hostIP[1]) + string(hostIP[2]) + string(hostIP[3])
 }
-// Time any function in the repository - 
+
+// Time any function in the repository -
 // Usage - defer utils.TimeTrack(time.Now(), "Filename.go-FunctionName")
 func TimeTrack(start time.Time, name string) {
-    elapsed := time.Since(start)
-        log.Printf("%s took %s", name, elapsed)
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
 }

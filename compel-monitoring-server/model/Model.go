@@ -3,20 +3,24 @@ package model
 import "sync"
 
 type Server struct {
-	sync.Mutex
-	clients map[int64]string
+	sync.RWMutex
+	connectedClients map[int64]string
 }
 
-func New() *Server {
+func NewServer() *Server {
 	return &Server{
-		clients: make(map[int64]string),
+		connectedClients: make(map[int64]string),
 	}
 }
 
-func retrieveAllClients() []string {
+func retrieveAllClients() {
 
 }
 
 func addClient() {
+
+}
+
+func (server *Server) handleStatMessage() {
 
 }

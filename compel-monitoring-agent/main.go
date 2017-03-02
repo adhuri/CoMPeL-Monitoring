@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
@@ -28,7 +27,6 @@ func sendStats(client *model.Client, counter uint64) {
 	for i := 0; i < numOfWorkers; i++ {
 		//buffer.WriteString(<-containerStats)
 		statsToSend[i] = <-containerStats
-		fmt.Println("############### " + statsToSend[i])
 	}
 	//stringToSend := buffer.String()
 
