@@ -7,10 +7,11 @@ import (
 	"net"
 	"sync"
 
+	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/model"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
 
-func handleConnectMessage(conn net.Conn) {
+func handleConnectMessage(conn net.Conn, server *model.Server) {
 	// When everything is done close the connection
 	defer conn.Close()
 
@@ -28,6 +29,8 @@ func handleConnectMessage(conn net.Conn) {
 		fmt.Println("INFO: Connect Request Received")
 		fmt.Printf("%+v\n", connectMessage)
 	}
+
+	server.UpdateState(connectMessage.AgentIP)
 
 	// Create a ConnectAck Message
 	connectAck := monitorProtocol.ConnectReply{
@@ -47,7 +50,7 @@ func handleConnectMessage(conn net.Conn) {
 
 }
 
-func tcpListener(wg *sync.WaitGroup) {
+func tcpListener(wg *sync.WaitGroup, server *model.Server) {
 	defer wg.Done()
 	// Server listens on all interfaces for TCP connestion
 	listener, err := net.Listen("tcp", ":8081")
@@ -63,11 +66,11 @@ func tcpListener(wg *sync.WaitGroup) {
 			// If error continue to wait for other clients to connect
 			continue
 		}
-		go handleConnectMessage(conn)
+		go handleConnectMessage(conn, server)
 	}
 }
 
-func handleMonitorMessage(conn *net.UDPConn) {
+func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 	var buf [10000]byte
 
 	n, addr, err := conn.ReadFromUDP(buf[0:])
@@ -87,12 +90,13 @@ func handleMonitorMessage(conn *net.UDPConn) {
 	//fmt.Println(utils.IpToString(statsMessage.AgentIP[0:]))
 	fmt.Println(statsMessage.Data)
 	fmt.Println(addr)
-
+	agentIp := statsMessage.AgentIP
+	server.UpdateState(agentIp)
 	//conn.WriteToUDP([]byte("Hello Client"), addr)
 
 }
 
-func udpListener(wg *sync.WaitGroup) {
+func udpListener(wg *sync.WaitGroup, server *model.Server) {
 	defer wg.Done()
 
 	udpAddr, err := net.ResolveUDPAddr("udp4", ":7071")
@@ -106,18 +110,18 @@ func udpListener(wg *sync.WaitGroup) {
 	}
 
 	for {
-		handleMonitorMessage(conn)
+		handleMonitorMessage(conn, server)
 	}
 
 }
 
 func main() {
-
+	server := model.NewServer()
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go tcpListener(&wg)
-	go udpListener(&wg)
+	go tcpListener(&wg, &server)
+	go udpListener(&wg, &server)
 
 	wg.Wait()
 
