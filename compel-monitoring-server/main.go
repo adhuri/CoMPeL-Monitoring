@@ -73,7 +73,7 @@ func tcpListener(wg *sync.WaitGroup, server *model.Server) {
 func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 	var buf [10000]byte
 
-	n, addr, err := conn.ReadFromUDP(buf[0:])
+	n, _, err := conn.ReadFromUDP(buf[0:])
 	if err != nil {
 		fmt.Println("Error Reading from UDP socket")
 		return
@@ -85,13 +85,17 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 		fmt.Println("Error Decoding at Server")
 		return
 	}
-	//fmt.Printf("%q: {%s,%v}\n", statsMessage.MessageId, utils.IpToString(statsMessage.AgentIP[0:]), statsMessage.Data)
-	fmt.Println(statsMessage.MessageId)
-	//fmt.Println(utils.IpToString(statsMessage.AgentIP[0:]))
-	fmt.Println(statsMessage.Data)
-	fmt.Println(addr)
+	// fmt.Printf("%q: {%s,%v}\n", statsMessage.MessageId, utils.IpToString(statsMessage.AgentIP[0:]), statsMessage.Data)
+	// fmt.Println(statsMessage.MessageId)
+	// fmt.Println(utils.IpToString(statsMessage.AgentIP[0:]))
+	// fmt.Println(statsMessage.Data)
+	// fmt.Println(addr)
 	agentIp := statsMessage.AgentIP
-	server.UpdateState(agentIp)
+	if server.IsAgentConnected(agentIp) {
+		// save in the DB
+		fmt.Println("Valid Agent : ")
+		server.UpdateState(agentIp)
+	}
 	//conn.WriteToUDP([]byte("Hello Client"), addr)
 
 }
@@ -120,8 +124,8 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go tcpListener(&wg, &server)
-	go udpListener(&wg, &server)
+	go tcpListener(&wg, server)
+	go udpListener(&wg, server)
 
 	wg.Wait()
 

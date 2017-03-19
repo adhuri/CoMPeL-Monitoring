@@ -17,7 +17,7 @@ func NewServer() *Server {
 	}
 }
 
-func (server *Server) ValidAgent(agentIp net.IP) bool {
+func (server *Server) IsAgentConnected(agentIp net.IP) bool {
 	server.Lock()
 	defer server.Unlock()
 	currentTime := time.Now().Unix()
