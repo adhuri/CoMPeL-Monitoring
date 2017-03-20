@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"net"
 	"time"
 
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
@@ -33,17 +35,45 @@ func sendStats(client *model.Client, counter uint64) {
 	monitorProtocol.SendContainerStatistics(statsToSend)
 }
 
+func checkIfServerIsAlive() bool {
+	conn, err := net.Dial("tcp", "127.0.0.1:8081")
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
 func main() {
 	client := model.NewClient()
 	var counter uint64 = 0
 	monitorProtocol.ConnectToServer()
+	client.UpdateServerStatus(true)
 	statsTimer := time.NewTicker(time.Second * 2).C
+	aliveTimer := time.NewTicker(time.Second * 10).C
 	for {
 		select {
 		case <-statsTimer:
 			{
-				counter++
-				sendStats(client, counter)
+				if client.GetServerStatus() {
+					counter++
+					sendStats(client, counter)
+				} else {
+					fmt.Println("Server Offline .... Trying to Reconnect")
+					monitorProtocol.ConnectToServer()
+					client.UpdateServerStatus(true)
+				}
+			}
+		case <-aliveTimer:
+			{
+				isAlive := checkIfServerIsAlive()
+				if !isAlive {
+					// update the server status
+					fmt.Println("Server Dead")
+					client.UpdateServerStatus(false)
+				} else {
+					fmt.Println("Server is still Alive")
+				}
 			}
 		}
 	}

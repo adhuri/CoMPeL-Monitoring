@@ -19,6 +19,7 @@ type Client struct {
 	containerStatus map[string]uint64
 	totalMemory     string
 	totalCPU        string
+	serverAlive     bool
 }
 
 func NewClient() *Client {
@@ -27,6 +28,7 @@ func NewClient() *Client {
 		containerStatus: make(map[string]uint64),
 		totalMemory:     "",
 		totalCPU:        "",
+		serverAlive:     false,
 	}
 }
 
@@ -95,4 +97,16 @@ func (client *Client) UpdateContainerCounter(containerId string, currentCounter 
 	client.Lock()
 	defer client.Unlock()
 	client.containerStatus[containerId] = currentCounter
+}
+
+func (client *Client) UpdateServerStatus(isAlive bool) {
+	client.Lock()
+	defer client.Unlock()
+	client.serverAlive = isAlive
+}
+
+func (client *Client) GetServerStatus() bool {
+	client.RLock()
+	defer client.RUnlock()
+	return client.serverAlive
 }
