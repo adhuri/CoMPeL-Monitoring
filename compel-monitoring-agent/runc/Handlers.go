@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
+	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
+	stats "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 	utils "github.com/adhuri/Compel-Monitoring/utils"
 )
@@ -30,7 +31,7 @@ func GetRunningContainers() []string {
 
 	status := "running"
 	// Command to process the list of containers - returns each container name with \n seperated
-	command := "runc list|grep " + status + "| cut -d\" \" -f1"
+	command := "runc list| grep -v \"docker\" | grep " + status + "| cut -d\" \" -f1"
 
 	//Requires /bin/sh due to sudo permissions
 	cmd := exec.Command("/bin/sh", "-c", command)
@@ -53,11 +54,17 @@ func GetRunningContainers() []string {
 	//return make([]string, 4)
 }
 
-func GetContainerStats(containerID string) string {
+func GetContainerStats(client *model.Client, containerID string) string {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
-	message := monitorProtocol.EncodeStatsJSON(containerID, "0", strconv.FormatFloat(stats.CalculateMemoryUsed(containerID), 'f', -1, 32))
+	//Calculating Memory Used
+	memoryPercentage := strconv.FormatFloat(stats.CalculateMemoryPercentage(client, containerID), 'f', -1, 32)
+
+	//Calculating CPU Used
+	cpuPercentage := strconv.FormatFloat(stats.CalculateCPUUsedPercentage(client, containerID), 'f', -1, 32)
+
+	message := monitorProtocol.EncodeStatsJSON(containerID, cpuPercentage, memoryPercentage)
 	return string(message)
 }
