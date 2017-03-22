@@ -35,14 +35,14 @@ func sendStats(client *model.Client, counter uint64) {
 
 	var containers []string = runc.GetRunningContainers()
 	numOfWorkers := len(containers)
-	containerStats := make(chan string, numOfWorkers)
+	containerStats := make(chan ContainerStats, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
 		client.UpdateContainerCounter(containers[i], counter)
 		go worker(client, containers[i], containerStats, counter)
 	}
 
 	//var buffer bytes.Buffer
-	var statsToSend = make([]string, numOfWorkers)
+	var statsToSend = make([]ContainerStats, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
 		//buffer.WriteString(<-containerStats)
 		statsToSend[i] = <-containerStats

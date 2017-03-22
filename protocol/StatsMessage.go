@@ -1,8 +1,6 @@
 package protocol
 
 import (
-	"encoding/json"
-	"fmt"
 	"net"
 	"time"
 
@@ -12,24 +10,24 @@ import (
 type StatsMessage struct {
 	MessageId int64
 	AgentIP   net.IP
-	Data      []string
+	Data      []ContainerStats
 }
 
 // The stats to be sent to
-type StatsJSON struct {
-	ContainerID string `json:"containerID"`
-	Timestamp   int64  `json:"timestamp"`
-	Data        `json:"data"`
+type ContainerStats struct {
+	ContainerID string
+	Timestamp   int64
+	Data
 }
 
 type Data struct {
-	CPU    string `json:"cpu"`
-	Memory string `json:"memory"`
+	CPU    string
+	Memory string
 }
 
-func EncodeStatsJSON(cID, cpu, memory string) []byte {
+func GetContainerStats(cID, cpu, memory string) ContainerStats {
 
-	message := &StatsJSON{
+	message := ContainerStats{
 		ContainerID: cID,
 		Timestamp:   time.Now().Unix(),
 		Data: Data{
@@ -37,16 +35,11 @@ func EncodeStatsJSON(cID, cpu, memory string) []byte {
 			Memory: memory,
 		},
 	}
-	b, err := json.Marshal(message)
-	if err != nil {
-		fmt.Println("Error : Marshalling JSON in StatsMessage", err)
-		return []byte(`{}`)
-	}
-	return b
+	return message
 
 }
 
-func NewStatsMessage(dataToSend []string) *StatsMessage {
+func NewStatsMessage(dataToSend []ContainerStats) *StatsMessage {
 
 	// Get External IP of host
 	//var hostIP [4]byte

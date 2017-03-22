@@ -54,7 +54,7 @@ func GetRunningContainers() []string {
 	//return make([]string, 4)
 }
 
-func GetContainerStats(client *model.Client, containerID string) string {
+func GetContainerStats(client *model.Client, containerID string) ContainerStats {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
@@ -65,6 +65,6 @@ func GetContainerStats(client *model.Client, containerID string) string {
 	//Calculating CPU Used
 	cpuPercentage := strconv.FormatFloat(stats.CalculateCPUUsedPercentage(client, containerID), 'f', -1, 32)
 
-	message := monitorProtocol.EncodeStatsJSON(containerID, cpuPercentage, memoryPercentage)
-	return string(message)
+	message := monitorProtocol.GetContainerStats(containerID, cpuPercentage, memoryPercentage)
+	return message
 }

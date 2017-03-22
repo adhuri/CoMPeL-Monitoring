@@ -77,7 +77,7 @@ func ConnectToServer() {
 	}
 }
 
-func SendContainerStatistics(stringToSend []string) {
+func SendContainerStatistics(stringToSend []ContainerStats) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:7071")
 	if err != nil {
 		fmt.Println("Error in Resolving Address " + err.Error())
