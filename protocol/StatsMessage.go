@@ -3,6 +3,7 @@ package protocol
 import (
 	"net"
 	"time"
+	"unsafe"
 
 	"github.com/adhuri/Compel-Monitoring/utils"
 )
@@ -17,26 +18,31 @@ type StatsMessage struct {
 type ContainerStats struct {
 	ContainerID string
 	Timestamp   int64
-	Data
+	MetricData  Data
 }
 
 type Data struct {
-	CPU    string
-	Memory string
+	CPU    float64
+	Memory float64
 }
 
-func GetContainerStats(cID, cpu, memory string) ContainerStats {
+func (stats *ContainerStats) Size() int {
+	size := int(unsafe.Sizeof(*stats))
+	size += len(stats.ContainerID)
+	return size
+}
+
+func GetContainerStats(cID string, cpu float64, memory float64) ContainerStats {
 
 	message := ContainerStats{
 		ContainerID: cID,
 		Timestamp:   time.Now().Unix(),
-		Data: Data{
+		MetricData: Data{
 			CPU:    cpu,
 			Memory: memory,
 		},
 	}
 	return message
-
 }
 
 func NewStatsMessage(dataToSend []ContainerStats) *StatsMessage {

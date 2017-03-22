@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 
@@ -54,16 +53,16 @@ func GetRunningContainers() []string {
 	//return make([]string, 4)
 }
 
-func GetContainerStats(client *model.Client, containerID string) ContainerStats {
+func GetContainerStats(client *model.Client, containerID string) monitorProtocol.ContainerStats {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
-	memoryPercentage := strconv.FormatFloat(stats.CalculateMemoryPercentage(client, containerID), 'f', -1, 32)
+	memoryPercentage := stats.CalculateMemoryPercentage(client, containerID)
 
 	//Calculating CPU Used
-	cpuPercentage := strconv.FormatFloat(stats.CalculateCPUUsedPercentage(client, containerID), 'f', -1, 32)
+	cpuPercentage := stats.CalculateCPUUsedPercentage(client, containerID)
 
 	message := monitorProtocol.GetContainerStats(containerID, cpuPercentage, memoryPercentage)
 	return message

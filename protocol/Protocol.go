@@ -90,13 +90,15 @@ func SendContainerStatistics(stringToSend []ContainerStats) {
 	}
 
 	// construct a StatsMessage
-	var buffer bytes.Buffer
+	//var buffer bytes.Buffer
 	//data := ""
 	startPointer := 0
 	endPointer := 0
+	totalSizeOfData := 0
 	for i := 0; i < len(stringToSend); i++ {
-		buffer.WriteString(stringToSend[i])
-		if buffer.Len() <= 8000 {
+		//buffer.WriteString(stringToSend[i])
+		totalSizeOfData += stringToSend[i].Size()
+		if totalSizeOfData <= 8000 {
 			endPointer++
 			fmt.Println(endPointer)
 		} else {
@@ -116,8 +118,10 @@ func SendContainerStatistics(stringToSend []ContainerStats) {
 				return
 			}
 			startPointer = endPointer
-			buffer.Reset()
-			buffer.WriteString(stringToSend[i])
+			totalSizeOfData = 0
+			totalSizeOfData += stringToSend[i].Size()
+			//buffer.Reset()
+			//buffer.WriteString(stringToSend[i])
 			endPointer++
 		}
 	}
