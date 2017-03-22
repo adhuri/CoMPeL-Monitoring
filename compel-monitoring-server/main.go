@@ -94,6 +94,7 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 	if server.IsAgentConnected(agentIp) {
 		// save in the DB
 		//statsMessage.Data
+		db.StoreData(agentIp.String(), statsMessage.Data)
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		fmt.Println("Valid Agent : ")
 		server.UpdateState(agentIp)

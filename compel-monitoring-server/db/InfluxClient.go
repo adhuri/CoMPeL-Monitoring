@@ -1,4 +1,4 @@
-package main
+package influx
 
 import (
 	"fmt"
@@ -78,7 +78,6 @@ func queryDB(clnt client.Client, cmd string) (res []client.Result, err error) {
 }
 
 func main() {
-	//timeStamp := "1490057608"
 	i, err := strconv.ParseInt("1490057610", 10, 64)
 	if err != nil {
 		panic(err)
