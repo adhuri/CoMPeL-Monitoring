@@ -88,11 +88,13 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 	// fmt.Printf("%q: {%s,%v}\n", statsMessage.MessageId, utils.IpToString(statsMessage.AgentIP[0:]), statsMessage.Data)
 	// fmt.Println(statsMessage.MessageId)
 	// fmt.Println(utils.IpToString(statsMessage.AgentIP[0:]))
-	// fmt.Println(statsMessage.Data)
+	fmt.Println(statsMessage.Data)
 	// fmt.Println(addr)
 	agentIp := statsMessage.AgentIP
 	if server.IsAgentConnected(agentIp) {
 		// save in the DB
+		//statsMessage.Data
+		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		fmt.Println("Valid Agent : ")
 		server.UpdateState(agentIp)
 	}
