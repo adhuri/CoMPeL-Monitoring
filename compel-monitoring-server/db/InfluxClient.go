@@ -1,4 +1,4 @@
-package influx
+package main
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/influxdata/influxdb/client/v2"
+	influx "github.com/influxdata/influxdb/client/v2"
 )
 
 const (
@@ -15,22 +15,26 @@ const (
 	password = "bumblebeetuna"
 )
 
-func AddPoint(agentIp string, containerId string, cpuUsage float32, memoryUsage float32, timestamp time.Time) {
+func GetConnection() influx.Client {
+
 	// Create a new HTTPClient
-	c, err := client.NewHTTPClient(client.HTTPConfig{
+	conn, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     "http://localhost:10090",
 		Username: username,
 		Password: password,
 	})
 
-	defer c.Close()
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	return conn
+}
+
+func AddPoint(agentIp string, containerId string, cpuUsage float64, memoryUsage float64, timestamp time.Time, conn influx.Client) {
+
 	// Create a new point batch
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
+	bp, err := influx.NewBatchPoints(influx.BatchPointsConfig{
 		Database:  MyDB,
 		Precision: "s",
 	})
@@ -48,21 +52,21 @@ func AddPoint(agentIp string, containerId string, cpuUsage float32, memoryUsage 
 		"memory": memoryUsage,
 	}
 
-	pt, err := client.NewPoint("container_data", tags, fields, timestamp)
+	pt, err := influx.NewPoint("container_data", tags, fields, timestamp)
 	if err != nil {
 		log.Fatal(err)
 	}
 	bp.AddPoint(pt)
 
 	// Write the batch
-	if err := c.Write(bp); err != nil {
+	if err := conn.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // queryDB convenience function to query the database
-func queryDB(clnt client.Client, cmd string) (res []client.Result, err error) {
-	q := client.Query{
+func queryDB(clnt influx.Client, cmd string) (res []influx.Result, err error) {
+	q := influx.Query{
 		Command:  cmd,
 		Database: MyDB,
 	}
@@ -85,7 +89,7 @@ func main() {
 	tm := time.Unix(i, 0)
 	fmt.Println(tm)
 
-	c, err := client.NewHTTPClient(client.HTTPConfig{
+	c, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     "http://localhost:10090",
 		Username: username,
 		Password: password,
@@ -98,12 +102,13 @@ func main() {
 	}
 
 	//q := fmt.Sprintf("SELECT * FROM %s", "container_data")
-	q := fmt.Sprintf("select * from container_data")
+	q := fmt.Sprintf("select * from container_data where container = 'practice_container'")
 	res, err := queryDB(c, q)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(res[0].Series[0].Values[0][0])
+	fmt.Println(res[0].Series[0])
+	fmt.Println(res[0].Series[0].Values[0])
 
 	//AddPoint("192.168.12.1", "mycontainer", 0, 0.00012064271, tm)
 }

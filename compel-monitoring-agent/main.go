@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"time"
@@ -62,7 +63,11 @@ func checkIfServerIsAlive() bool {
 }
 
 func main() {
-	client := model.NewClient()
+	serverIp := flag.String("server", "127.0.0.1", "ip of the monitoring server")
+	serverUdpPort := flag.String("udpport", "7071", "udp port on the server")
+	serverTcpPort := flag.String("tcpport", "8081", "tcp port of the server")
+
+	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
 	var counter uint64 = 0
 	monitorProtocol.ConnectToServer()
 	client.UpdateServerStatus(true)

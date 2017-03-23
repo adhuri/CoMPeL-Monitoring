@@ -19,14 +19,20 @@ type Client struct {
 	newTotalCPU     int64 // Since Difference of CPU is stored for system
 	totalMemory     uint64
 	serverAlive     bool
+	serverIp        string
+	serverUdpPort   string
+	serverTcpPort   string
 }
 
-func NewClient() *Client {
+func NewClient(serverIp, tcpPort, udpPort string) *Client {
 	return &Client{
 		containerStats:  make(map[string]int64),
 		containerStatus: make(map[string]uint64),
 		oldTotalCPU:     -1, // Set as -1 if first time CPU calculate or Stale CPU
 		serverAlive:     false,
+		serverIp:        serverIp,
+		serverUdpPort:   udpPort,
+		serverTcpPort:   tcpPort,
 	}
 }
 
@@ -113,4 +119,24 @@ func (client *Client) GetServerStatus() bool {
 	client.RLock()
 	defer client.RUnlock()
 	return client.serverAlive
+}
+
+func (client *Client) GetServerTcpPort() string {
+	client.RLock()
+	defer client.RUnlock()
+	return client.serverTcpPort
+
+}
+
+func (client *Client) GetServerUdpPort() string {
+	client.RLock()
+	defer client.RUnlock()
+	return client.serverUdpPort
+}
+
+func (client *Client) GetServerIp() string {
+	client.RLock()
+	defer client.RUnlock()
+	return client.serverIp
+
 }
