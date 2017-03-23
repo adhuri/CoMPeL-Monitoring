@@ -111,7 +111,7 @@ func CalculateMemoryPercentage(client *model.Client, containerID string) (memory
 		return
 	}
 
-	memorypercent = float64(cmemory) / float64(tmemory)
+	memorypercent = (float64(cmemory) / float64(tmemory))* float64(100)
 	fmt.Printf("cmemory %d , tmemory %d \n", cmemory, tmemory)
 	fmt.Printf("memorypercent %f %%\n", memorypercent)
 	return
