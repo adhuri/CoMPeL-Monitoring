@@ -67,6 +67,8 @@ func main() {
 	serverUdpPort := flag.String("udpport", "7071", "udp port on the server")
 	serverTcpPort := flag.String("tcpport", "8081", "tcp port of the server")
 
+	flag.Parse()
+
 	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
 	var counter uint64 = 0
 	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort())

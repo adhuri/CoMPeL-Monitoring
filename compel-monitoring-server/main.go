@@ -55,7 +55,9 @@ func handleConnectMessage(conn net.Conn, server *model.Server) {
 func tcpListener(wg *sync.WaitGroup, server *model.Server) {
 	defer wg.Done()
 	// Server listens on all interfaces for TCP connestion
-	listener, err := net.Listen("tcp", ":"+server.GetTcpPort())
+	addr := ":" + server.GetTcpPort()
+
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic("Server Failed to Start")
 	}
@@ -108,7 +110,9 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 func udpListener(wg *sync.WaitGroup, server *model.Server) {
 	defer wg.Done()
 
-	udpAddr, err := net.ResolveUDPAddr("udp4", ":"+server.GetUdpPort())
+	addr := ":" + server.GetUdpPort()
+
+	udpAddr, err := net.ResolveUDPAddr("udp4", addr)
 	if err != nil {
 		fmt.Println("Error in Resolving Address " + err.Error())
 		panic("Unable to Start UDP Service on server")
@@ -128,6 +132,8 @@ func main() {
 
 	serverUdpPort := flag.String("udpport", "7071", "udp port on the server")
 	serverTcpPort := flag.String("tcpport", "8081", "tcp port of the server")
+
+	flag.Parse()
 
 	server := model.NewServer(*serverTcpPort, *serverUdpPort)
 	var wg sync.WaitGroup

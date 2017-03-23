@@ -56,7 +56,9 @@ func ConnectToServer(serverIp, tcpPort string) {
 	// Register client with server
 	for !connectedToServer {
 		// Setup a TCP connection for communication
-		conn, err := net.Dial("tcp", serverIp+":"+tcpPort)
+		addr := serverIp + ":" + tcpPort
+
+		conn, err := net.Dial("tcp", addr)
 		if err != nil {
 			// Before trying to reconnect to the server wait for 3 seconds
 			fmt.Print(".")

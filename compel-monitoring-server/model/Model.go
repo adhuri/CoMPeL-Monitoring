@@ -16,8 +16,8 @@ type Server struct {
 func NewServer(tcpPort, udpPort string) *Server {
 	return &Server{
 		connectedClients: make(map[string]int64),
-		udpPort:          tcpPort,
-		tcpPort:          udpPort,
+		udpPort:          udpPort,
+		tcpPort:          tcpPort,
 	}
 }
 
