@@ -47,7 +47,7 @@ func sendInitMessage(conn net.Conn) error {
 	return nil
 }
 
-func ConnectToServer() {
+func ConnectToServer(serverIp, tcpPort string) {
 	// Try connecting to the monitoring server
 	// If connection fails try reconnecting after 3 seconds again
 	connectedToServer := false
@@ -56,7 +56,7 @@ func ConnectToServer() {
 	// Register client with server
 	for !connectedToServer {
 		// Setup a TCP connection for communication
-		conn, err := net.Dial("tcp", "127.0.0.1:8081")
+		conn, err := net.Dial("tcp", serverIp+":"+tcpPort)
 		if err != nil {
 			// Before trying to reconnect to the server wait for 3 seconds
 			fmt.Print(".")
@@ -77,8 +77,8 @@ func ConnectToServer() {
 	}
 }
 
-func SendContainerStatistics(stringToSend []ContainerStats) {
-	udpAddr, err := net.ResolveUDPAddr("udp4", "127.0.0.1:7071")
+func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udpPort string) {
+	udpAddr, err := net.ResolveUDPAddr("udp4", serverIp+":"+udpPort)
 	if err != nil {
 		fmt.Println("Error in Resolving Address " + err.Error())
 		return

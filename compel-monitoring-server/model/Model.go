@@ -9,11 +9,15 @@ import (
 type Server struct {
 	sync.Mutex
 	connectedClients map[string]int64
+	udpPort          string
+	tcpPort          string
 }
 
-func NewServer() *Server {
+func NewServer(tcpPort, udpPort string) *Server {
 	return &Server{
 		connectedClients: make(map[string]int64),
+		udpPort:          tcpPort,
+		tcpPort:          udpPort,
 	}
 }
 
@@ -52,4 +56,18 @@ func (server *Server) addClient(ip string) {
 func (server *Server) UpdateState(agentIp net.IP) {
 	ip := agentIp.String()
 	server.addClient(ip)
+}
+
+func (server *Server) GetUdpPort() string {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.udpPort
+}
+
+func (server *Server) GetTcpPort() string {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.tcpPort
 }

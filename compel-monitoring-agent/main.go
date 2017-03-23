@@ -50,11 +50,11 @@ func sendStats(client *model.Client, counter uint64) {
 	}
 	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(statsToSend)
+	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort())
 }
 
-func checkIfServerIsAlive() bool {
-	conn, err := net.Dial("tcp", "127.0.0.1:8081")
+func checkIfServerIsAlive(client *model.Client) bool {
+	conn, err := net.Dial("tcp", client.GetServerIp()+":"+client.GetServerTcpPort())
 	if err != nil {
 		return false
 	}
@@ -69,7 +69,7 @@ func main() {
 
 	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
 	var counter uint64 = 0
-	monitorProtocol.ConnectToServer()
+	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort())
 	client.UpdateServerStatus(true)
 	statsTimer := time.NewTicker(time.Second * 2).C
 	aliveTimer := time.NewTicker(time.Second * 10).C
@@ -82,13 +82,13 @@ func main() {
 					sendStats(client, counter)
 				} else {
 					fmt.Println("Server Offline .... Trying to Reconnect")
-					monitorProtocol.ConnectToServer()
+					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort())
 					client.UpdateServerStatus(true)
 				}
 			}
 		case <-aliveTimer:
 			{
-				isAlive := checkIfServerIsAlive()
+				isAlive := checkIfServerIsAlive(client)
 				if !isAlive {
 					// update the server status
 					fmt.Println("Server Dead")
