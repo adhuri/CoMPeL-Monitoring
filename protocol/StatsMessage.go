@@ -1,16 +1,19 @@
 package protocol
 
 import (
+	"fmt"
 	"net"
 	"time"
 	"unsafe"
 
 	"github.com/adhuri/Compel-Monitoring/utils"
+	"github.com/mitchellh/hashstructure"
 )
 
 type StatsMessage struct {
 	MessageId int64
 	AgentIP   net.IP
+	HashCode  uint64
 	Data      []ContainerStats
 }
 
@@ -55,9 +58,17 @@ func NewStatsMessage(dataToSend []ContainerStats) *StatsMessage {
 		panic("Error Fetching Valid IP Address")
 	}
 
+	hash, err := hashstructure.Hash(dataToSend, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(hash)
+
 	return &StatsMessage{
 		MessageId: time.Now().Unix(),
 		AgentIP:   hostIP,
+		HashCode:  hash,
 		Data:      dataToSend,
 	}
 }

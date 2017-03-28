@@ -11,6 +11,7 @@ import (
 	db "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/db"
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/model"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
+	"github.com/mitchellh/hashstructure"
 )
 
 func handleConnectMessage(conn net.Conn, server *model.Server) {
@@ -98,6 +99,17 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 	if server.IsAgentConnected(agentIp) {
 		// save in the DB
 		//statsMessage.Data
+		hash, err := hashstructure.Hash(statsMessage.Data, nil)
+		if err != nil {
+			fmt.Println("Hash Calculation Failed")
+			return
+		}
+
+		if hash != statsMessage.HashCode {
+			fmt.Println("Hash Didn't Match")
+			return
+		}
+
 		db.StoreData(agentIp.String(), statsMessage.Data)
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		fmt.Println("Valid Agent : ")
@@ -126,6 +138,28 @@ func udpListener(wg *sync.WaitGroup, server *model.Server) {
 		handleMonitorMessage(conn, server)
 	}
 
+}
+
+func predictionQueryListener(wg *sync.WaitGroup, server *model.Server) {
+	defer wg.Done()
+	// Server listens on all interfaces for TCP connestion
+	addr := ":" + server.GetTcpPort()
+
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		panic("Server Failed to Start")
+	}
+
+	// Wait for clients to connect
+	for {
+		// Accept a connection and spin-off a goroutine
+		conn, err := listener.Accept()
+		if err != nil {
+			// If error continue to wait for other clients to connect
+			continue
+		}
+		go handleConnectMessage(conn, server)
+	}
 }
 
 func main() {

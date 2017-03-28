@@ -100,7 +100,7 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 	for i := 0; i < len(stringToSend); i++ {
 		//buffer.WriteString(stringToSend[i])
 		totalSizeOfData += stringToSend[i].Size()
-		if totalSizeOfData <= 8000 {
+		if totalSizeOfData <= 576 {
 			endPointer++
 			fmt.Println(endPointer)
 		} else {
