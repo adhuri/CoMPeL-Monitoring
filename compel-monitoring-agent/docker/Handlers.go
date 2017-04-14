@@ -1,4 +1,4 @@
-package main
+package docker
 
 import (
 	"fmt"
@@ -8,26 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/docker/stats"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 	"github.com/adhuri/Compel-Monitoring/utils"
 )
-
-// Hashmap to store the docker status output only once since it takes 2 seconds to call docker stats ( for correct cpu percent calculation)
-type DockerContainerStats struct {
-	Stats map[string]StatType
-}
-
-type StatType struct {
-	CpuPercent    float64
-	MemoryPercent float64
-}
-
-func NewDockerContainerStats() *DockerContainerStats {
-	return &DockerContainerStats{
-		Stats: make(map[string]StatType),
-	}
-}
 
 func main() {
 	DS := NewDockerContainerStats()
@@ -121,16 +104,16 @@ func (ds *DockerContainerStats) GetRunningDockerContainers() []string {
 	//return make([]string, 4)
 }
 
-func GetContainerStats(containerID string) monitorProtocol.ContainerStats {
+func (ds *DockerContainerStats) GetContainerStats(containerID string) monitorProtocol.ContainerStats {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
-	memoryPercentage := stats.CalculateMemoryPercentage(containerID)
+	memoryPercentage := CalculateMemoryPercentage(ds, containerID)
 
 	//Calculating CPU Used
-	cpuPercentage := stats.CalculateCPUUsedPercentage(containerID)
+	cpuPercentage := CalculateCPUUsedPercentage(ds, containerID)
 
 	message := monitorProtocol.GetContainerStats(containerID, cpuPercentage, memoryPercentage)
 	return message
