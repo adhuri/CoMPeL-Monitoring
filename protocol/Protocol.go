@@ -11,37 +11,37 @@ import (
 	logrus "github.com/Sirupsen/logrus"
 )
 
-func sendInitMessage(conn net.Conn) error {
+func sendInitMessage(conn net.Conn, log *logrus.Logger) error {
 	// send init message to server
 	connectMessage := *NewConnectRequest()
 	encoder := gob.NewEncoder(conn)
 	err := encoder.Encode(connectMessage)
-	//err := binary.Write(conn, binary.LittleEndian, connectMessage)
 	if err != nil {
 		// If error occurs in sending a connect message to server then return
-		fmt.Printf("ERROR : Failure While Sending Data To Server " + err.Error())
+		log.Errorln("Failure While Sending Data To Server " + err.Error())
 		return err
 	}
+	log.Infoln("Connect Message Successfully Sent")
 
 	// read ack from the server
 	serverReply := ConnectReply{}
 	decoder := gob.NewDecoder(conn)
 	err = decoder.Decode(&serverReply)
-	// err = binary.Read(conn, binary.LittleEndian, &serverReply)
 	if err != nil {
 		// If error occurs while reading ACK from server then return
-		fmt.Println("ERROR : Bad Reply From Server" + err.Error())
+		log.Errorln("Bad Reply From Server " + err.Error())
 		return err
 
 	} else {
 		// Print the ACK received from the server
-		fmt.Printf("INFO: Reply Received %+v \n", serverReply)
+		log.Infoln("Connect ACK Received")
 	}
 
 	// Validate server respose
 	var isSucees bool = ValidateResponse(connectMessage, serverReply)
 	if !isSucees {
 		// If Ack validation fails then return error
+		log.Errorln("Invalid Connect ACK")
 		return errors.New("Invalid Response")
 	}
 
@@ -54,7 +54,6 @@ func ConnectToServer(serverIp, tcpPort string, log *logrus.Logger) {
 	// If connection fails try reconnecting after 3 seconds again
 	connectedToServer := false
 	log.Info("Connecting to Server ...")
-	//fmt.Print("Connecting to Server ...")
 
 	// Register client with server
 	for !connectedToServer {
@@ -64,18 +63,18 @@ func ConnectToServer(serverIp, tcpPort string, log *logrus.Logger) {
 		conn, err := net.Dial("tcp", addr)
 		if err != nil {
 			// Before trying to reconnect to the server wait for 3 seconds
-			fmt.Print(".")
+			log.Warn("Server Not Alive")
 			time.Sleep(time.Second * 3)
 		} else {
 			// If connection successful send a connect message
-			err = sendInitMessage(conn)
+			err = sendInitMessage(conn, log)
 			if err != nil {
 				// Connect Protocol failed midway; Retry
-				fmt.Println("\n Try Reconnecting to server")
+				log.Warn("Connect Protocol failed. Try Reconnecting to server")
 				defer conn.Close()
 			} else {
 				// Client Registration successful
-				fmt.Println("\n Connected to Server")
+				log.Infoln("Connected to Server")
 				connectedToServer = true
 			}
 		}
