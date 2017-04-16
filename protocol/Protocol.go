@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net"
 	"time"
+
+	logrus "github.com/Sirupsen/logrus"
 )
 
 func sendInitMessage(conn net.Conn) error {
@@ -47,11 +49,12 @@ func sendInitMessage(conn net.Conn) error {
 	return nil
 }
 
-func ConnectToServer(serverIp, tcpPort string) {
+func ConnectToServer(serverIp, tcpPort string, log *logrus.Logger) {
 	// Try connecting to the monitoring server
 	// If connection fails try reconnecting after 3 seconds again
 	connectedToServer := false
-	fmt.Print("Connecting to Server ...")
+	log.Info("Connecting to Server ...")
+	//fmt.Print("Connecting to Server ...")
 
 	// Register client with server
 	for !connectedToServer {

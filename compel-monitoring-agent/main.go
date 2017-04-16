@@ -4,13 +4,32 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"time"
+
+	logrus "github.com/Sirupsen/logrus"
 
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
 	runc "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc"
 	stats "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
+
+var (
+	log *logrus.Logger
+)
+
+func init() {
+
+	log = logrus.New()
+
+	// Output logging to stdout
+	log.Out = os.Stdout
+
+	// Only log the info severity or above.
+	log.Level = logrus.InfoLevel
+
+}
 
 func worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64) {
 	stats := runc.GetContainerStats(client, containerId)
@@ -69,9 +88,15 @@ func main() {
 
 	flag.Parse()
 
+	log.WithFields(logrus.Fields{
+		"serverIp":      *serverIp,
+		"serverUdpPort": *serverUdpPort,
+		"serverTcpPort": *serverTcpPort,
+	}).Info("Inputs from command line")
+
 	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
 	var counter uint64 = 0
-	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort())
+	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
 	client.UpdateServerStatus(true)
 	statsTimer := time.NewTicker(time.Second * 2).C
 	aliveTimer := time.NewTicker(time.Second * 10).C
@@ -84,7 +109,7 @@ func main() {
 					sendStats(client, counter)
 				} else {
 					fmt.Println("Server Offline .... Trying to Reconnect")
-					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort())
+					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
 					client.UpdateServerStatus(true)
 				}
 			}
