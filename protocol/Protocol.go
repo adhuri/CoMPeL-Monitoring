@@ -81,21 +81,19 @@ func ConnectToServer(serverIp, tcpPort string, log *logrus.Logger) {
 	}
 }
 
-func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udpPort string) {
+func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udpPort string, log *logrus.Logger) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", serverIp+":"+udpPort)
 	if err != nil {
-		fmt.Println("Error in Resolving Address " + err.Error())
+		log.Errorln("Error in Resolving Address " + err.Error())
 		return
 	}
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	if err != nil {
-		fmt.Println("Error in Resolving Address")
+		log.Errorln("Error in Dialing UDP" + err.Error())
 		return
 	}
 
 	// construct a StatsMessage
-	//var buffer bytes.Buffer
-	//data := ""
 	startPointer := 0
 	endPointer := 0
 	totalSizeOfData := 0
@@ -103,8 +101,15 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 		//buffer.WriteString(stringToSend[i])
 		totalSizeOfData += stringToSend[i].Size()
 		if totalSizeOfData <= 576 {
+			// Increment End Pointer if we can add more
 			endPointer++
-			fmt.Println(endPointer)
+
+			// Debug Logging
+			log.WithFields(logrus.Fields{
+				"Total_Data_To_Send":  len(stringToSend),
+				"Current_Packet_Size": totalSizeOfData,
+			}).Debugln("End Pointer Value : " + string(endPointer))
+
 		} else {
 			statsMessage := *NewStatsMessage(stringToSend[startPointer:endPointer])
 			var buf bytes.Buffer

@@ -89,24 +89,28 @@ func checkIfServerIsAlive(client *model.Client) bool {
 }
 
 func main() {
+	// Read command line arguments
 	serverIp := flag.String("server", "127.0.0.1", "ip of the monitoring server")
 	serverUdpPort := flag.String("udpport", "7071", "udp port on the server")
 	serverTcpPort := flag.String("tcpport", "8081", "tcp port of the server")
-
 	flag.Parse()
-
 	log.WithFields(logrus.Fields{
 		"serverIp":      *serverIp,
 		"serverUdpPort": *serverUdpPort,
 		"serverTcpPort": *serverTcpPort,
 	}).Info("Inputs from command line")
 
+	// Connect to monitoring server
 	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
-	var counter uint64 = 0
 	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
+
+	// After successful connection update flag on client
 	client.UpdateServerStatus(true)
+
+	// Initialise Stats Timer
 	statsTimer := time.NewTicker(time.Second * 2).C
 	aliveTimer := time.NewTicker(time.Second * 10).C
+	var counter uint64 = 0
 	for {
 		select {
 		case <-statsTimer:
@@ -115,7 +119,7 @@ func main() {
 					counter++
 					sendStats(client, counter)
 				} else {
-					fmt.Println("Server Offline .... Trying to Reconnect")
+					log.Warnln("Server Offline .... Trying to Reconnect")
 					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
 					client.UpdateServerStatus(true)
 				}
@@ -125,10 +129,10 @@ func main() {
 				isAlive := checkIfServerIsAlive(client)
 				if !isAlive {
 					// update the server status
-					fmt.Println("Server Dead")
+					log.Errorln("Server Dead")
 					client.UpdateServerStatus(false)
 				} else {
-					fmt.Println("Server is still Alive")
+					log.Infoln("Server is still Alive")
 				}
 			}
 		}
