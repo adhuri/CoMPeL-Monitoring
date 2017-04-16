@@ -29,6 +29,13 @@ func init() {
 	// Only log the info severity or above.
 	log.Level = logrus.InfoLevel
 
+	// Microseconds level logging
+	customFormatter := new(logrus.TextFormatter)
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05.000000"
+	customFormatter.FullTimestamp = true
+
+	log.Formatter = customFormatter
+
 }
 
 func worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64) {
