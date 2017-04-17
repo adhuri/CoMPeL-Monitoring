@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"net"
 	"time"
 
@@ -98,7 +97,6 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 	endPointer := 0
 	totalSizeOfData := 0
 	for i := 0; i < len(stringToSend); i++ {
-		//buffer.WriteString(stringToSend[i])
 		totalSizeOfData += stringToSend[i].Size()
 		if totalSizeOfData <= 576 {
 			// Increment End Pointer if we can add more
@@ -114,23 +112,28 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			statsMessage := *NewStatsMessage(stringToSend[startPointer:endPointer])
 			var buf bytes.Buffer
 			if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
-				// handle error
-				fmt.Println("Error in Encoding the StatMessage using GOB Encoder")
+				log.Errorln("Error in Encoding the StatMessage using GOB Encoder")
 				return
 			}
 			_, err := conn.Write(buf.Bytes())
-			//
-			// // Send StatsMessage
-			// _, err = conn.Write([]byte(stringToSend))
 			if err != nil {
-				fmt.Println("Error in Resolving Address")
+				log.Errorln("Error in Sending Stat Message")
 				return
 			}
+			log.Infoln("STATS MESSAGE SENT. Message", statsMessage)
+
+			// Debug Logging
+			log.WithFields(logrus.Fields{
+				"Start_Pointer":       startPointer,
+				"End_Pointer":         endPointer,
+				"Total_Data_To_Send":  len(stringToSend),
+				"Current_Packet_Size": totalSizeOfData,
+			}).Debugln("Information Regarding Stat Message Sent")
+
+			// Update Pointers
 			startPointer = endPointer
 			totalSizeOfData = 0
 			totalSizeOfData += stringToSend[i].Size()
-			//buffer.Reset()
-			//buffer.WriteString(stringToSend[i])
 			endPointer++
 		}
 	}
@@ -140,27 +143,16 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 		statsMessage := *NewStatsMessage(stringToSend[startPointer:])
 		var buf bytes.Buffer
 		if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
-			// handle error
-			fmt.Println("Error in Encoding the StatMessage using GOB Encoder")
+			log.Errorln("Error in Encoding the StatMessage using GOB Encoder")
 			return
 		}
 		_, err := conn.Write(buf.Bytes())
-		//
-		// // Send StatsMessage
-		// _, err = conn.Write([]byte(stringToSend))
 		if err != nil {
-			fmt.Println("Error in Resolving Address")
+			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+		log.Infoln("STATS MESSAGE SENT \n")
+		log.Debugln("Stats Message = ", statsMessage)
 
 	}
-
-	// var buf [512]byte
-	// n, err := conn.Read(buf[0:])
-	// if err != nil {
-	// 	fmt.Println("Error")
-	// }
-	//
-	// fmt.Println(string(buf[0:n]))
-
 }

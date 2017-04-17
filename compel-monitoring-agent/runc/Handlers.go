@@ -1,12 +1,11 @@
 package runc
 
 import (
-	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
 	stats "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
@@ -14,7 +13,7 @@ import (
 )
 
 // GetRunningContainers ... Function to get running containers ; Returns empty list if no container running
-func GetRunningContainers() []string {
+func GetRunningContainers(log *logrus.Logger) []string {
 
 	//Track time using utils
 
@@ -36,34 +35,38 @@ func GetRunningContainers() []string {
 	cmd := exec.Command("/bin/sh", "-c", command)
 
 	if cmdOut, err = cmd.Output(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error in GetRunningContainers()- run list ", err)
+		log.Errorln("There was an error in GetRunningContainers()- run list ", err)
 	}
 	containerList := strings.Split(string(cmdOut), "\n")
 
 	//Empty list
 	if len(containerList) == 1 {
-		fmt.Println(" No container running ")
+		log.Warnln("No container running")
 		return make([]string, 0)
 	}
 	// Since it contains "\n"
 
-	fmt.Println(" Containers running ", containerList, len(containerList)-1)
+	log.Infoln("Total running containers are : ", len(containerList)-1)
+
+	//fmt.Println(" Containers running ", containerList, len(containerList)-1)
+	log.Debugln("Running Containers are: ", containerList)
 	return containerList[0 : len(containerList)-1]
 
 	//return make([]string, 4)
 }
 
-func GetContainerStats(client *model.Client, containerID string) monitorProtocol.ContainerStats {
+func GetContainerStats(client *model.Client, containerID string, log *logrus.Logger) monitorProtocol.ContainerStats {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
-	memoryPercentage := stats.CalculateMemoryPercentage(client, containerID)
+	memoryPercentage := stats.CalculateMemoryPercentage(client, containerID, log)
 
 	//Calculating CPU Used
-	cpuPercentage := stats.CalculateCPUUsedPercentage(client, containerID)
+	cpuPercentage := stats.CalculateCPUUsedPercentage(client, containerID, log)
 
+	// Creating Stat Message
 	message := monitorProtocol.GetContainerStats(containerID, cpuPercentage, memoryPercentage)
 	return message
 }

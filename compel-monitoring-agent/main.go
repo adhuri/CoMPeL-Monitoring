@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
 	"os"
 	"time"
@@ -39,28 +38,28 @@ func init() {
 }
 
 func worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64) {
-	stats := runc.GetContainerStats(client, containerId)
+	stats := runc.GetContainerStats(client, containerId, log)
 	containerStats <- stats
 }
 
 func sendStats(client *model.Client, counter uint64) {
 
 	//Set SystemCPU usage
-	sysCPUusage, err := stats.GetSystemCPU()
+	sysCPUusage, err := stats.GetSystemCPU(log)
 	if err != nil {
-		fmt.Println("Error : cannot GetSystemCPU")
+		log.Errorln("Cannot Get System CPU")
 	} else {
 		client.SetTotalCPU(sysCPUusage)
 	}
 	//Set Memory Limit
-	sysMemoryLimit, err := stats.GetSystemMemory()
+	sysMemoryLimit, err := stats.GetSystemMemory(log)
 	if err != nil {
-		fmt.Println("Error : cannot GetSystemCPU")
+		log.Errorln("Cannot Get System Memory")
 	} else {
 		client.SetTotalMemory(sysMemoryLimit)
 	}
 
-	var containers []string = runc.GetRunningContainers()
+	var containers []string = runc.GetRunningContainers(log)
 	numOfWorkers := len(containers)
 	containerStats := make(chan monitorProtocol.ContainerStats, numOfWorkers)
 	for i := 0; i < numOfWorkers; i++ {
@@ -76,7 +75,7 @@ func sendStats(client *model.Client, counter uint64) {
 	}
 	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort())
+	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
 }
 
 func checkIfServerIsAlive(client *model.Client) bool {
