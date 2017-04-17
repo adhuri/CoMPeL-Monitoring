@@ -8,21 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 	"github.com/adhuri/Compel-Monitoring/utils"
 )
 
-//
-// func main() {
-// 	DS := NewDockerContainerStats()
-//
-// 	DS.GetDockerStats()
-//
-// 	fmt.Println(DS.GetRunningDockerContainers())
-//
-// }
-
-func (ds *DockerContainerStats) GetDockerStats() {
+func (ds *DockerContainerStats) GetDockerStats(log *logrus.Logger) {
 
 	//Defining byte buffer to store the output
 	var (
@@ -40,18 +31,18 @@ func (ds *DockerContainerStats) GetDockerStats() {
 	cmd := exec.Command("/bin/sh", "-c", command)
 
 	if cmdOut, err = cmd.Output(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error in dockerstats.go-GetRunningDockerContainers()- ", err)
+		log.Errorln(os.Stderr, "There was an error in dockerstats.go-GetRunningDockerContainers()- ", err)
 	}
 	containerDataList := strings.Split(string(cmdOut), "\n")
 
 	if len(containerDataList) == 0 {
-		fmt.Println("Handlers.go - GetDockerStats() No containers running ")
+		log.Errorln("Handlers.go - GetDockerStats() No containers running ")
 	}
 
 	for _, el := range containerDataList {
 		if el != "" {
 			// All elements should be parseable
-			containerId, cpuPercent, memoryPecent := parseContainerDetails(el)
+			containerId, cpuPercent, memoryPecent := parseContainerDetails(el, log)
 			ds.Stats[containerId] = StatType{CpuPercent: cpuPercent, MemoryPercent: memoryPecent}
 		}
 	}
@@ -63,15 +54,15 @@ func (ds *DockerContainerStats) GetDockerStats() {
 
 }
 
-func parseContainerDetails(line string) (containerID string, cpuPercent float64, memoryPercent float64) {
+func parseContainerDetails(line string, log *logrus.Logger) (containerID string, cpuPercent float64, memoryPercent float64) {
 	// Since the format is colon seperated
 	containerDetails := strings.Split(line, ":")
-	fmt.Println(containerDetails)
+	log.Errorln(containerDetails)
 
 	if len(containerDetails) > 3 {
-		fmt.Println("parseContainerDetails() - Seems you added NetBlock or Disk IO but forgot to parse it")
+		log.Errorln("parseContainerDetails() - Seems you added NetBlock or Disk IO but forgot to parse it")
 	} else if len(containerDetails) < 3 {
-		fmt.Println("parseContainerDetails() - Did you delete CPU Percentage or Disk IO but forgot to unparse it")
+		log.Errorln("parseContainerDetails() - Did you delete CPU Percentage or Disk IO but forgot to unparse it")
 	}
 
 	containerID = containerDetails[0]
@@ -82,7 +73,7 @@ func parseContainerDetails(line string) (containerID string, cpuPercent float64,
 
 }
 
-func GetRunningContainers(ds *DockerContainerStats) []string {
+func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string {
 
 	//Track time using utils
 	defer utils.TimeTrack(time.Now(), "dockerstats.go-GetRunningDockerContainers")
@@ -94,7 +85,7 @@ func GetRunningContainers(ds *DockerContainerStats) []string {
 
 	//Empty list
 	if len(containerDataList) == 0 {
-		fmt.Println(" No container running ")
+		log.Warnln(" No container running ")
 		return make([]string, 0)
 	}
 	// Since it contains "\n"
@@ -105,18 +96,18 @@ func GetRunningContainers(ds *DockerContainerStats) []string {
 	//return make([]string, 4)
 }
 
-func GetContainerStats(ds *DockerContainerStats, containerID string) monitorProtocol.ContainerStats {
+func GetContainerStats(ds *DockerContainerStats, containerID string, log *logrus.Logger) monitorProtocol.ContainerStats {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
-	memoryPercentage := CalculateMemoryPercentage(ds, containerID)
-	fmt.Println("memoryPercentage for container ", containerID, " - ", memoryPercentage)
+	memoryPercentage := CalculateMemoryPercentage(ds, containerID, log)
+	log.Debugln("memoryPercentage for container ", containerID, " - ", memoryPercentage)
 
 	//Calculating CPU Used
-	cpuPercentage := CalculateCPUUsedPercentage(ds, containerID)
-	fmt.Println("cpuPercentage for container ", containerID, " - ", cpuPercentage)
+	cpuPercentage := CalculateCPUUsedPercentage(ds, containerID, log)
+	log.Debugln("cpuPercentage for container ", containerID, " - ", cpuPercentage)
 
 	message := monitorProtocol.GetContainerStats(containerID, cpuPercentage, memoryPercentage)
 	return message

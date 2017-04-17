@@ -1,24 +1,14 @@
 package docker
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/adhuri/Compel-Monitoring/utils"
 )
 
-// func main() {
-// 	//	fmt.Print("Memory Used for container 1 : ", getContainerMemory("container1"), "\n")
-// 	//fmt.Print("Total System Memory : ", getSystemMemory(), "\n")
-// 	//fmt.Println(getDockerStatsFromCommandLine("9189afaebbea", "CPUPerc"))
-// 	//fmt.Println(getDockerStatsFromCommandLine("9189afaebbea", "MemPerc"))
-//
-// 	fmt.Println(CalculateMemoryPercentage("9189afaebbea"))
-// 	fmt.Println(CalculateCPUUsedPercentage("9189afaebbea"))
-// }
-
 //CalculateMemoryPercentage %Memory Used by the container
-func CalculateMemoryPercentage(ds *DockerContainerStats, containerID string) (memoryPercent float64) {
+func CalculateMemoryPercentage(ds *DockerContainerStats, containerID string, log *logrus.Logger) (memoryPercent float64) {
 	defer utils.TimeTrack(time.Now(), "Stats.go- Docker CalculateMemoryPercentage")
 	memoryPercent = 0.0
 
@@ -28,13 +18,13 @@ func CalculateMemoryPercentage(ds *DockerContainerStats, containerID string) (me
 		return
 	}
 	// Else if no key exists
-	fmt.Println("CalculateMemoryPercentage() - Could not find key in datastructure DockerContainerStats for containerID", containerID)
+	log.Errorln("CalculateMemoryPercentage() - Could not find key in datastructure DockerContainerStats for containerID", containerID)
 	return
 
 }
 
 //CalculateCPUUsedPercentage %CPU Used by the container
-func CalculateCPUUsedPercentage(ds *DockerContainerStats, containerID string) (cpuPercent float64) {
+func CalculateCPUUsedPercentage(ds *DockerContainerStats, containerID string, log *logrus.Logger) (cpuPercent float64) {
 
 	defer utils.TimeTrack(time.Now(), "stats.go- Docker CalculateCPUUsedPercentage")
 	cpuPercent = 0.0
@@ -44,7 +34,7 @@ func CalculateCPUUsedPercentage(ds *DockerContainerStats, containerID string) (c
 		return
 	}
 	// Else if no key exists
-	fmt.Println("CalculateCPUUsedPercentage() - Could not find key in datastructure DockerContainerStats for containerID", containerID)
+	log.Errorln("CalculateCPUUsedPercentage() - Could not find key in datastructure DockerContainerStats for containerID", containerID)
 	return
 
 }
