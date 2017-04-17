@@ -1,17 +1,39 @@
 ---
 # This playbook builds and deploys server and client on specified ports on respective hosts
+# Copy keys using `ssh-copy-id username@ip`
 
-- hosts: compel
+- hosts: compel-server
   vars:
     module_name: "compel-monitoring"
+    go_path: "{{ lookup('env','GOPATH') }}"
   tasks:
-    - name: Deploy {{ module_name }}-server on compel 
+    - name: Deploy {{ module_name }}-server on compel
       copy:
-        src: ./bin/{{ module_name }}-server
+        src: /{{ go_path }}/bin/{{ module_name }}-server
         dest: ~/{{ module_name }}-server
         mode: "u+x"
 
+    # - name: Start {{ module_name }}-server #on port {{server_port}}
+    #   #shell: ~/{{ module_name }}-server {{server_port}}
+    #   shell: ~/{{ module_name }}-server > ~/{{ module_name }}-server.log &
 
-    - name: Start {{ module_name }}-server on port {{server_port}}
-      shell: ~/{{ module_name }}-server {{server_port}}
-      changed_when: false
+      #changed_when: false
+
+
+#Change to host1 and host2 for prod
+- hosts: host1,host2
+  vars:
+    module_name: "compel-monitoring"
+    go_path: "{{ lookup('env','GOPATH') }}"
+  tasks:
+    - name: Deploy {{ module_name }}-agent on compel
+      copy:
+        src: /{{ go_path }}/bin/{{ module_name }}-agent
+        dest: ~/{{ module_name }}-agent
+        mode: "u+x"
+
+    # - name: Start {{ module_name }}-agent #on port {{server_port}}
+    #   #shell: ~/{{ module_name }}-server {{server_port}}
+    #   shell: ~/{{ module_name }}-agent > ~/{{ module_name }}-agent.log &
+
+      #changed_when: false
