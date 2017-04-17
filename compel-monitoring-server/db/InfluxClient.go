@@ -17,7 +17,7 @@ func GetConnection() influx.Client {
 
 	// Create a new HTTPClient
 	conn, err := influx.NewHTTPClient(influx.HTTPConfig{
-		Addr:     "http://localhost:10090",
+		Addr:     "http://influxdb:8086",
 		Username: username,
 		Password: password,
 	})
@@ -25,7 +25,7 @@ func GetConnection() influx.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	//fmt.Println("Connection to influxdb success", conn)
 	return conn
 }
 
