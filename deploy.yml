@@ -21,7 +21,7 @@
 
 
 #Change to host1 and host2 for prod
-- hosts: compel-server
+- hosts: host1,host2
   vars:
     module_name: "compel-monitoring"
     go_path: "{{ lookup('env','GOPATH') }}"
