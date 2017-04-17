@@ -6,8 +6,8 @@ deploy:
   api_key:
     secure: hkezgfnHqEUSAYaKpjeIpJL0mzJURanBBh57Spl/ncGVnIzDx2cAO8zL7mYsYA7AYF6UJmwNI1NkQftHeesEbQg7Uwu2D/y2Eb93/YPWgE1BYzcsQDaxi5fOlvDuISh70Art+fZjEIKME+apktBP1TUNv1i6sYql8yvYo3xXxohpFlQEqXt5xFs4wOQmxXodDtSr9TXl8uGTcVUlEbomMtl8YqpVM9uHUeAM3IkxZ4fsnVnzErKO+bL+cvkDjyB8ipyrPgasVLk8j03GLvW42dVD3GSbLK327V7fznS/nYK1JIsVz9mIwA4jbhvXJlBHoFQDdLOf1f4D5sjUaaIfbnu8wif2rmi3tIic22AGgVtE608/2mH/TvjMYsNXfEGi9GdZDNYk3RapZiQra91lVbZAKRzlN1ZALcngynlsg5Q+ZaxihJLQR7Glzp1k3d2yS34/nDHVnzZfhBtKWpV6Vo3eCC8BPx5jrhEcZLNaQiq/ZaXKusoJUtY5ZZ/YxapoCxZ0qPSbXxYrg3Lbi35xR5o+vQt6o2VXvZucKDTxQDOwH/+pANod8VOWoy6PZVzAeIJceUSJrAPB5IN9hjTpkd00UXCSlM0Y+B73R5zhuCa0KqAiWAe0CBK1tnqiq8/w1PYIArBxcpGQEnc/EcO77QoTdTKQWgyNNgc7AJ20l8k=
   file:
-  - bin/compel-monitoring-server
-  - bin/compel-monitoring-agent
+  - compel-monitoring-server
+  - compel-monitoring-agent
   skip_cleanup: true
   on:
     tags: true

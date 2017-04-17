@@ -13,9 +13,9 @@
         dest: ~/{{ module_name }}-server
         mode: "u+x"
 
-    - name: Start {{ module_name }}-server #on port {{server_port}}
-      #shell: ~/{{ module_name }}-server {{server_port}}
-      shell: ~/{{ module_name }}-server > ~/{{ module_name }}-server.log &
+    # - name: Start {{ module_name }}-server #on port {{server_port}}
+    #   #shell: ~/{{ module_name }}-server {{server_port}}
+    #   shell: ~/{{ module_name }}-server > ~/{{ module_name }}-server.log &
 
       #changed_when: false
 
@@ -32,8 +32,8 @@
         dest: ~/{{ module_name }}-agent
         mode: "u+x"
 
-    - name: Start {{ module_name }}-agent #on port {{server_port}}
-      #shell: ~/{{ module_name }}-server {{server_port}}
-      shell: ~/{{ module_name }}-agent > ~/{{ module_name }}-agent.log &
+    # - name: Start {{ module_name }}-agent #on port {{server_port}}
+    #   #shell: ~/{{ module_name }}-server {{server_port}}
+    #   shell: ~/{{ module_name }}-agent > ~/{{ module_name }}-agent.log &
 
       #changed_when: false
