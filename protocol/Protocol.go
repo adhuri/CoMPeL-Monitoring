@@ -120,7 +120,8 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 				log.Errorln("Error in Sending Stat Message")
 				return
 			}
-			log.Infoln("STATS MESSAGE SENT. Message", statsMessage)
+			log.Debugln("Stats Message = ", statsMessage)
+			log.Infoln("Stats Message Sent.\n")
 
 			// Debug Logging
 			log.WithFields(logrus.Fields{
@@ -151,8 +152,8 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
-		log.Infoln("STATS MESSAGE SENT \n")
 		log.Debugln("Stats Message = ", statsMessage)
+		log.Infoln("Stats Message Sent \n")
 
 	}
 }

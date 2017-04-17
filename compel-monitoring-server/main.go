@@ -4,15 +4,39 @@ import (
 	"bytes"
 	"encoding/gob"
 	"flag"
-	"fmt"
 	"net"
+	"os"
 	"sync"
 
+	logrus "github.com/Sirupsen/logrus"
 	db "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/db"
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/model"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 	"github.com/mitchellh/hashstructure"
 )
+
+var (
+	log *logrus.Logger
+)
+
+func init() {
+
+	log = logrus.New()
+
+	// Output logging to stdout
+	log.Out = os.Stdout
+
+	// Only log the info severity or above.
+	log.Level = logrus.InfoLevel
+
+	// Microseconds level logging
+	customFormatter := new(logrus.TextFormatter)
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05.000000"
+	customFormatter.FullTimestamp = true
+
+	log.Formatter = customFormatter
+
+}
 
 func handleConnectMessage(conn net.Conn, server *model.Server) {
 	// When everything is done close the connection
@@ -25,12 +49,12 @@ func handleConnectMessage(conn net.Conn, server *model.Server) {
 	//err := binary.Read(conn, binary.LittleEndian, &connectMessage)
 	if err != nil {
 		// If failure in parsing, close the connection and return
-		fmt.Println("ERROR : Bad Message From Client" + err.Error())
+		log.Errorln("Bad Message From Client" + err.Error())
 		return
 	} else {
 		// If success, print the message received
-		fmt.Println("INFO: Connect Request Received")
-		fmt.Printf("%+v\n", connectMessage)
+		log.Infoln("Connect Request Received")
+		log.Debugln("Connect Request Content : ", connectMessage)
 	}
 
 	server.UpdateState(connectMessage.AgentIP)
@@ -48,8 +72,10 @@ func handleConnectMessage(conn net.Conn, server *model.Server) {
 	//err = binary.Write(conn, binary.LittleEndian, connectAck)
 	if err != nil {
 		// If failure in parsing, close the connection and return
+		log.Errorln("Connect Ack Failed")
 		return
 	}
+	log.Infoln("Connect Ack Sent")
 
 }
 
@@ -60,7 +86,7 @@ func tcpListener(wg *sync.WaitGroup, server *model.Server) {
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		panic("Server Failed to Start")
+		log.Fatalln("Server Failed To Start ")
 	}
 
 	// Wait for clients to connect
@@ -80,20 +106,21 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 
 	n, _, err := conn.ReadFromUDP(buf[0:])
 	if err != nil {
-		fmt.Println("Error Reading from UDP socket")
+		log.Errorln("Error Reading from UDP socket")
 		return
 	}
 	//fmt.Println(string(buf[0:n]))
 	var statsMessage monitorProtocol.StatsMessage
 	if err := gob.NewDecoder(bytes.NewReader(buf[0:n])).Decode(&statsMessage); err != nil {
 		// handle error
-		fmt.Println("Error Decoding at Server")
+		log.Errorln("Error Decoding at Server")
 		return
 	}
+	log.Infoln("Stats Message Received From Agent " + statsMessage.AgentIP.String())
 	// fmt.Printf("%q: {%s,%v}\n", statsMessage.MessageId, utils.IpToString(statsMessage.AgentIP[0:]), statsMessage.Data)
 	// fmt.Println(statsMessage.MessageId)
 	// fmt.Println(utils.IpToString(statsMessage.AgentIP[0:]))
-	fmt.Println(statsMessage.Data)
+	log.Debugln(statsMessage.Data)
 	// fmt.Println(addr)
 	agentIp := statsMessage.AgentIP
 	if server.IsAgentConnected(agentIp) {
@@ -101,18 +128,18 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 		//statsMessage.Data
 		hash, err := hashstructure.Hash(statsMessage.Data, nil)
 		if err != nil {
-			fmt.Println("Hash Calculation Failed")
+			log.Errorln("Hash Calculation Failed")
 			return
 		}
 
 		if hash != statsMessage.HashCode {
-			fmt.Println("Hash Didn't Match")
+			log.Errorln("Hash Didn't Match")
 			return
 		}
 
 		db.StoreData(agentIp.String(), statsMessage.Data)
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
-		fmt.Println("Valid Agent : ")
+		log.Infoln("Agent " + agentIp.String() + " Validated")
 		server.UpdateState(agentIp)
 	}
 	//conn.WriteToUDP([]byte("Hello Client"), addr)
@@ -126,12 +153,13 @@ func udpListener(wg *sync.WaitGroup, server *model.Server) {
 
 	udpAddr, err := net.ResolveUDPAddr("udp4", addr)
 	if err != nil {
-		fmt.Println("Error in Resolving Address " + err.Error())
-		panic("Unable to Start UDP Service on server")
+		log.Fatalln("Error in Resolving Address " + err.Error())
+		// panic("Unable to Start UDP Service on server")
 	}
 	conn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		panic("Unable to Start UDP Service on server")
+		log.Fatalln("Unable to Start UDP Service on server")
+		// panic("Unable to Start UDP Service on server")
 	}
 
 	for {
@@ -147,7 +175,7 @@ func predictionQueryListener(wg *sync.WaitGroup, server *model.Server) {
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		panic("Server Failed to Start")
+		log.Fatalln("Server Failed to Start")
 	}
 
 	// Wait for clients to connect
