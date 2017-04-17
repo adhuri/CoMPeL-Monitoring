@@ -13,11 +13,11 @@ const (
 	password = "bumblebeetuna"
 )
 
-func GetConnection() influx.Client {
+func GetConnection(ip string) influx.Client {
 
 	// Create a new HTTPClient
 	conn, err := influx.NewHTTPClient(influx.HTTPConfig{
-		Addr:     "http://influxdb:8086",
+		Addr:     "http://" + ip + ":8086",
 		Username: username,
 		Password: password,
 	})
