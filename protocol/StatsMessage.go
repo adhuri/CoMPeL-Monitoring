@@ -63,7 +63,7 @@ func NewStatsMessage(dataToSend []ContainerStats) *StatsMessage {
 		panic(err)
 	}
 
-	fmt.Println(hash)
+	fmt.Println("Hash : ", hash)
 
 	return &StatsMessage{
 		MessageId: time.Now().Unix(),

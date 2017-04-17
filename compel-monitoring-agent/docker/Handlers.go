@@ -12,14 +12,15 @@ import (
 	"github.com/adhuri/Compel-Monitoring/utils"
 )
 
-func main() {
-	DS := NewDockerContainerStats()
-
-	DS.GetDockerStats()
-
-	fmt.Println(DS.GetRunningDockerContainers())
-
-}
+//
+// func main() {
+// 	DS := NewDockerContainerStats()
+//
+// 	DS.GetDockerStats()
+//
+// 	fmt.Println(DS.GetRunningDockerContainers())
+//
+// }
 
 func (ds *DockerContainerStats) GetDockerStats() {
 
@@ -81,7 +82,7 @@ func parseContainerDetails(line string) (containerID string, cpuPercent float64,
 
 }
 
-func (ds *DockerContainerStats) GetRunningDockerContainers() []string {
+func GetRunningContainers(ds *DockerContainerStats) []string {
 
 	//Track time using utils
 	defer utils.TimeTrack(time.Now(), "dockerstats.go-GetRunningDockerContainers")
@@ -99,21 +100,23 @@ func (ds *DockerContainerStats) GetRunningDockerContainers() []string {
 	// Since it contains "\n"
 
 	fmt.Println(" Containers running ", containerDataList, len(containerDataList))
-	return containerDataList[0 : len(containerDataList)-1]
-
+	//return containerDataList[0 : len(containerDataList)-1]
+	return containerDataList[:]
 	//return make([]string, 4)
 }
 
-func (ds *DockerContainerStats) GetContainerStats(containerID string) monitorProtocol.ContainerStats {
+func GetContainerStats(ds *DockerContainerStats, containerID string) monitorProtocol.ContainerStats {
 
 	//Timing this function
 	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
 	memoryPercentage := CalculateMemoryPercentage(ds, containerID)
+	fmt.Println("memoryPercentage for container ", containerID, " - ", memoryPercentage)
 
 	//Calculating CPU Used
 	cpuPercentage := CalculateCPUUsedPercentage(ds, containerID)
+	fmt.Println("cpuPercentage for container ", containerID, " - ", cpuPercentage)
 
 	message := monitorProtocol.GetContainerStats(containerID, cpuPercentage, memoryPercentage)
 	return message
