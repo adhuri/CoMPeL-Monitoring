@@ -25,3 +25,14 @@ echo "[INFO] Installing Docker "
 sudo apt-get update
 
 sudo apt-get install docker-ce
+
+
+
+#Install Docker engine
+
+echo "[NOTICE] Installing docker-machine for swarm"
+
+curl -L https://github.com/docker/machine/releases/download/v0.10.0/docker-machine-`uname -s`-`uname -m` >/tmp/docker-machine &&
+
+chmod +x /tmp/docker-machine &&
+  sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
