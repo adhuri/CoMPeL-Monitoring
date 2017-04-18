@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"flag"
 	"net"
+	"net/http"
 	"os"
 	"sync"
 
@@ -12,11 +14,13 @@ import (
 	db "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/db"
 	model "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/model"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
+	"github.com/gorilla/mux"
 	"github.com/mitchellh/hashstructure"
 )
 
 var (
-	log *logrus.Logger
+	log    *logrus.Logger
+	server *model.Server
 )
 
 func init() {
@@ -137,10 +141,17 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 			return
 		}
 
+		containerList := make([]string, 0)
+		for _, containerStat := range statsMessage.Data {
+			containerId := containerStat.ContainerID
+			containerList = append(containerList, containerId)
+		}
+
 		db.StoreData(agentIp.String(), statsMessage.Data, server.GetInfluxServer())
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		log.Infoln("Agent " + agentIp.String() + " Validated")
 		server.UpdateState(agentIp)
+		server.SetActiveContainersForAgent(agentIp.String(), containerList)
 	}
 	//conn.WriteToUDP([]byte("Hello Client"), addr)
 
@@ -168,25 +179,23 @@ func udpListener(wg *sync.WaitGroup, server *model.Server) {
 
 }
 
+func HandleQuery(w http.ResponseWriter, req *http.Request) {
+	queryResponse := monitorProtocol.GenerateQueryResponse(server)
+	// encoder := gob.NewEncoder(w)
+	// err := encoder.Encode(queryResponse)
+	// if err != nil {
+	// 	log.Errorln("Response to the Query has been found")
+	// }
+	json.NewEncoder(w).Encode(queryResponse)
+}
+
 func predictionQueryListener(wg *sync.WaitGroup, server *model.Server) {
 	defer wg.Done()
-	// Server listens on all interfaces for TCP connestion
-	addr := ":" + server.GetTcpPort()
-
-	listener, err := net.Listen("tcp", addr)
+	router := mux.NewRouter()
+	router.HandleFunc("/query", HandleQuery).Methods("GET")
+	err := http.ListenAndServe(":"+server.GetRestPort(), router)
 	if err != nil {
-		log.Fatalln("Server Failed to Start")
-	}
-
-	// Wait for clients to connect
-	for {
-		// Accept a connection and spin-off a goroutine
-		conn, err := listener.Accept()
-		if err != nil {
-			// If error continue to wait for other clients to connect
-			continue
-		}
-		go handleConnectMessage(conn, server)
+		log.Fatalln("Unable to Start REST Server")
 	}
 }
 
@@ -194,6 +203,7 @@ func main() {
 
 	serverUdpPort := flag.String("udpport", "7071", "udp port on the server")
 	serverTcpPort := flag.String("tcpport", "8081", "tcp port of the server")
+	restPort := flag.String("restPort", "9091", "tcp port of the server")
 	influxServer := flag.String("influxServer", "127.0.0.1", "ip of influx server")
 
 	flag.Parse()
@@ -201,15 +211,17 @@ func main() {
 	log.WithFields(logrus.Fields{
 		"serverUdpPort": *serverUdpPort,
 		"serverTcpPort": *serverTcpPort,
+		"restPort":      *restPort,
 		"influxServer":  *influxServer,
 	}).Info("Inputs from command line")
 
-	server := model.NewServer(*serverTcpPort, *serverUdpPort, *influxServer)
+	server = model.NewServer(*serverTcpPort, *serverUdpPort, *restPort, *influxServer)
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	go tcpListener(&wg, server)
 	go udpListener(&wg, server)
+	go predictionQueryListener(&wg, server)
 
 	wg.Wait()
 
