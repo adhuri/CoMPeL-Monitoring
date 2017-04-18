@@ -9,16 +9,20 @@ import (
 type Server struct {
 	sync.Mutex
 	connectedClients map[string]int64
+	activeContainers map[string][]string
 	udpPort          string
 	tcpPort          string
+	restPort         string
 	influxServer     string
 }
 
-func NewServer(tcpPort, udpPort, influxServer string) *Server {
+func NewServer(tcpPort, udpPort, restPort, influxServer string) *Server {
 	return &Server{
 		connectedClients: make(map[string]int64),
+		activeContainers: make(map[string][]string),
 		udpPort:          udpPort,
 		tcpPort:          tcpPort,
+		restPort:         restPort,
 		influxServer:     influxServer,
 	}
 }
@@ -34,18 +38,37 @@ func (server *Server) IsAgentConnected(agentIp net.IP) bool {
 	return false
 }
 
-func (server *Server) RetrieveAllActiveClients(activeAgents []string) {
+func (server *Server) RetrieveAllActiveClients(activeAgents *[]string) {
 	server.Lock()
 	defer server.Unlock()
 
 	currentTime := time.Now().Unix()
 	for key := range server.connectedClients {
 		if (currentTime - server.connectedClients[key]) < 40 {
-			activeAgents = append(activeAgents, key)
+			*activeAgents = append(*activeAgents, key)
 		} else {
 			delete(server.connectedClients, key)
 		}
 	}
+}
+
+func (server *Server) RetrieveAllActiveContainers(agentIp string) []string {
+	server.Lock()
+	defer server.Unlock()
+
+	containers := server.activeContainers[agentIp]
+	actvContainers := make([]string, 0)
+	for _, containerId := range containers {
+		actvContainers = append(actvContainers, containerId)
+	}
+	return actvContainers
+}
+
+func (server *Server) SetActiveContainersForAgent(agentIp string, containerList []string) {
+	server.Lock()
+	defer server.Unlock()
+
+	server.activeContainers[agentIp] = containerList
 }
 
 func (server *Server) addClient(ip string) {
@@ -79,4 +102,11 @@ func (server *Server) GetInfluxServer() string {
 	defer server.Unlock()
 
 	return server.influxServer
+}
+
+func (server *Server) GetRestPort() string {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.restPort
 }

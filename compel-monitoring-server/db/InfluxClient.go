@@ -17,7 +17,7 @@ func GetConnection(ip string) influx.Client {
 
 	// Create a new HTTPClient
 	conn, err := influx.NewHTTPClient(influx.HTTPConfig{
-		Addr:     "http://" + ip + ":8086",
+		Addr:     "http://" + ip + ":10090",
 		Username: username,
 		Password: password,
 	})
