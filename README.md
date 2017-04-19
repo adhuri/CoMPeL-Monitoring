@@ -29,3 +29,9 @@ eg - 1.0.2
 #### Push using tags for release
  
 ```git push origin master --tags ```
+
+#### Screenshot for grafana
+ 
+![alt text][grafana]
+
+[grafana]: https://github.com/adhuri/Compel-Monitoring/blob/master/grafana-dashboard/grafana_screenshot.png "Grafana"
