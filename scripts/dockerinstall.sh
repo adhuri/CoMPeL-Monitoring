@@ -36,3 +36,21 @@ curl -L https://github.com/docker/machine/releases/download/v0.10.0/docker-machi
 
 chmod +x /tmp/docker-machine &&
   sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
+
+
+
+#Make experimental
+
+echo " Changing /etc/docker/daemon.json configuration file"
+
+echo '{
+    "experimental": true
+}'> /etc/docker/daemon.json
+
+
+echo "Restarting docker"
+
+service docker restart 
+
+echo "Checking docker version"
+docker version
