@@ -76,8 +76,8 @@ fi
 #Inspecting Ip address
 
 log "Inspecting IP address of started $my_sql_container_name container with containerID $mysql_container_id"
-log "ssh $mysql_host_username@$mysql_host_ip sudo docker inspect $mysql_container_id|grep IPv4Address |cut -d \":\" -f2"
-mysql_ip_adress=`ssh $mysql_host_username@$mysql_host_ip sudo docker inspect $mysql_container_id|grep IPv4Address |cut -d ":" -f2`
+log "ssh $mysql_host_username@$mysql_host_ip sudo docker inspect $mysql_container_id|grep IPv4Address |cut -d \":\" -f2|tr -d \" \\\"\""
+mysql_ip_adress=`ssh $mysql_host_username@$mysql_host_ip sudo docker inspect $mysql_container_id|grep IPv4Address |cut -d ":" -f2|tr -d " \""`
 if [ $? -ne 0 ]
 then
     log "docker inspect failed. exiting..."
@@ -148,8 +148,7 @@ ssh $rubis_host_username@$rubis_host_ip "sudo docker rm $rubis_container_name" >
 
 log "Starting container on host $rubis_host_ip "
 log "ssh $rubis_host_username@$rubis_host_ip sudo docker  run --name $rubis_container_name --network=$network_name -p 81:80 -e DBIP=$mysql_ip_adress -e DBUSER=root -e DBPASSWORD=$my_sql_password -e MYHOSTNAME=$MYHOSTNAME -d $rubis_image_name"
-command="ssh $rubis_host_username@$rubis_host_ip sudo docker  run --name $rubis_container_name --network=$network_name -p 81:80 -e DBIP=$mysql_ip_adress -e DBUSER=root -e DBPASSWORD=$my_sql_password -e MYHOSTNAME=$MYHOSTNAME -d $rubis_image_name"
-rubis_container_id=`$command`
+rubis_container_id=`ssh $rubis_host_username@$rubis_host_ip sudo docker  run --name $rubis_container_name --network=$network_name -p 81:80 -e DBIP=$mysql_ip_adress -e DBUSER=root -e DBPASSWORD=$my_sql_password -e MYHOSTNAME=$MYHOSTNAME -d $rubis_image_name`
 if [ $? -ne 0 ]
 then
     log "docker run failed. exiting..."
