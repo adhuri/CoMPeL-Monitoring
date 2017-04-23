@@ -92,6 +92,24 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 		return
 	}
 
+	if len(stringToSend) == 0 {
+		emptyMessage := []ContainerStats{}
+		statsMessage := *NewStatsMessage(emptyMessage)
+		var buf bytes.Buffer
+		if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
+			log.Errorln("Error in Encoding the StatMessage using GOB Encoder")
+			return
+		}
+
+		if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
+			log.Errorln("Error in Encoding the StatMessage using GOB Encoder")
+			return
+		}
+
+		log.Info("No Container Running But Still Sending the HEART BEAT! ")
+		return
+	}
+
 	// construct a StatsMessage
 	startPointer := 0
 	endPointer := 0
