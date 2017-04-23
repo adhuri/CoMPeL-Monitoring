@@ -43,8 +43,10 @@ func (ds *DockerContainerStats) GetDockerStats(log *logrus.Logger) {
 	for _, el := range containerDataList {
 		if el != "" {
 			// All elements should be parseable
-			containerId, cpuPercent, memoryPecent := parseContainerDetails(el, log)
-			ds.Stats[containerId] = StatType{CpuPercent: cpuPercent, MemoryPercent: memoryPecent}
+			containerId, cpuPercent, memoryPercent := parseContainerDetails(el, log)
+			//ds.Stats[containerId] = NewStatType(cpuPercent, memoryPercent)
+			// To avoid lock issues
+			ds.SetContainerStat(containerId, NewStatType(cpuPercent, memoryPercent))
 		}
 	}
 
@@ -80,7 +82,7 @@ func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string
 	defer utils.TimeTrack(time.Now(), "dockerstats.go-GetRunningDockerContainers")
 
 	containerDataList := make([]string, 0, len(ds.Stats))
-	for k := range ds.Stats {
+	for k := range ds.GetAllContainerStat() {
 		containerDataList = append(containerDataList, k)
 	}
 
