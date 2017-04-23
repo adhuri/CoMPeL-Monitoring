@@ -101,8 +101,9 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			return
 		}
 
-		if err := gob.NewEncoder(&buf).Encode(statsMessage); err != nil {
-			log.Errorln("Error in Encoding the StatMessage using GOB Encoder")
+		_, err := conn.Write(buf.Bytes())
+		if err != nil {
+			log.Errorln("Error in Sending Stat Message")
 			return
 		}
 
