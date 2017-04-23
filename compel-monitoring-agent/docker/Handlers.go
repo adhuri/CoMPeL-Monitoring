@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -36,8 +35,10 @@ func (ds *DockerContainerStats) GetDockerStats(log *logrus.Logger) {
 	containerDataList := strings.Split(string(cmdOut), "\n")
 
 	if len(containerDataList) == 0 {
-		log.Errorln("Handlers.go - GetDockerStats() No containers running ")
+		log.Warnln("Handlers.go - GetDockerStats() No containers running ")
 	}
+	//log.Debugln("Refreshing DockerStats object for issue #5")
+	//ds = NewDockerContainerStats()
 
 	for _, el := range containerDataList {
 		if el != "" {
@@ -90,7 +91,7 @@ func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string
 	}
 	// Since it contains "\n"
 
-	fmt.Println(" Containers running ", containerDataList, len(containerDataList))
+	log.Infoln("Containers running ", len(containerDataList), containerDataList)
 	//return containerDataList[0 : len(containerDataList)-1]
 	return containerDataList[:]
 	//return make([]string, 4)

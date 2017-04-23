@@ -6,9 +6,9 @@ import (
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
 )
 
-func StoreData(agentIp string, dataReceived []monitorProtocol.ContainerStats, influxServerIp string) {
+func StoreData(agentIp string, dataReceived []monitorProtocol.ContainerStats, influxServerIp string, influxPort string) {
 
-	conn := GetConnection(influxServerIp)
+	conn := GetConnection(influxServerIp, influxPort)
 
 	for _, containerStat := range dataReceived {
 

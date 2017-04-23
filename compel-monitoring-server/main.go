@@ -147,7 +147,7 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 			containerList = append(containerList, containerId)
 		}
 
-		db.StoreData(agentIp.String(), statsMessage.Data, server.GetInfluxServer())
+		db.StoreData(agentIp.String(), statsMessage.Data, server.GetInfluxServer(), server.GetInfluxPort())
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		log.Infoln("Agent " + agentIp.String() + " Validated")
 		server.UpdateState(agentIp)
@@ -205,6 +205,7 @@ func main() {
 	serverTcpPort := flag.String("tcpport", "8081", "tcp port of the server")
 	restPort := flag.String("restPort", "9091", "tcp port of the server")
 	influxServer := flag.String("influxServer", "127.0.0.1", "ip of influx server")
+	influxPort := flag.String("influxPort", "8086", "port of influx server")
 
 	flag.Parse()
 
@@ -213,9 +214,10 @@ func main() {
 		"serverTcpPort": *serverTcpPort,
 		"restPort":      *restPort,
 		"influxServer":  *influxServer,
+		"influxPort":    *influxPort,
 	}).Info("Inputs from command line")
 
-	server = model.NewServer(*serverTcpPort, *serverUdpPort, *restPort, *influxServer)
+	server = model.NewServer(*serverTcpPort, *serverUdpPort, *restPort, *influxServer, *influxPort)
 	var wg sync.WaitGroup
 	wg.Add(3)
 
