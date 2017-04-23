@@ -12,7 +12,7 @@ func CalculateMemoryPercentage(ds *DockerContainerStats, containerID string, log
 	defer utils.TimeTrack(time.Now(), "Stats.go- Docker CalculateMemoryPercentage")
 	memoryPercent = 0.0
 
-	if stat, exists := ds.Stats[containerID]; exists {
+	if stat, exists := ds.GetContainerStat(containerID); exists {
 		//do something here
 		memoryPercent = stat.MemoryPercent
 		return
@@ -28,7 +28,7 @@ func CalculateCPUUsedPercentage(ds *DockerContainerStats, containerID string, lo
 
 	defer utils.TimeTrack(time.Now(), "stats.go- Docker CalculateCPUUsedPercentage")
 	cpuPercent = 0.0
-	if stat, exists := ds.Stats[containerID]; exists {
+	if stat, exists := ds.GetContainerStat(containerID); exists {
 		//do something here
 		cpuPercent = stat.CpuPercent
 		return

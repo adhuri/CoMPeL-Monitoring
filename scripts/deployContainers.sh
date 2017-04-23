@@ -24,6 +24,17 @@ rubis_host_username="root"
 log(){ echo [$(date -u)] : $1;}
 log_input() { echo -n [$(date -u)] : $1; }
 
+docker_pull(){
+  IMAGE=$1
+  USER=$2
+  IP=$3
+  log "Pulling image for container $IMAGE on host $IP "
+  log "ssh $USER@$IP sudo docker  pull $IMAGE"
+  ssh $USER@$IP sudo docker  pull $IMAGE
+
+}
+
+
 setup_mysql(){
 log "Setting up $my_sql_container_name container"
 
@@ -43,7 +54,7 @@ log_input "Enter username for $mysql_host_ip[default :root ]"
 read userInput
 
 if [[ -z "$userInput" ]]; then
-   mysql_host_username="adhuri"
+   mysql_host_username="root"
 else
    # If userInput is not empty show what the user typed in and run ls -l
    mysql_host_username=$userInput
@@ -58,6 +69,9 @@ ssh $mysql_host_username@$mysql_host_ip "sudo docker stop $my_sql_container_name
 log "Removing existing container [if exists] on host $mysql_host_ip "
 log "ssh $mysql_host_username@$mysql_host_ip sudo docker rm $my_sql_container_name"
 ssh $mysql_host_username@$mysql_host_ip "sudo docker rm $my_sql_container_name" >/dev/null
+
+
+docker_pull "$my_sql_image_name" "$mysql_host_username" "$mysql_host_ip"
 
 
 log "Starting container on host $mysql_host_ip "
@@ -123,7 +137,7 @@ log_input "Enter username for $rubis_host_ip[default :root ]"
 read userInput
 
 if [[ -z "$userInput" ]]; then
-   rubis_host_username="adhuri"
+   rubis_host_username="root"
 else
    # If userInput is not empty show what the user typed in and run ls -l
    rubis_host_username=$userInput
@@ -145,6 +159,9 @@ ssh $rubis_host_username@$rubis_host_ip "sudo docker rm $rubis_container_name" >
 
 #rubis_host_ip="152.46.18.63"
 #rubis_host_username="root"
+
+docker_pull $rubis_image_name $rubis_host_username $rubis_host_ip
+
 
 log "Starting container on host $rubis_host_ip "
 log "ssh $rubis_host_username@$rubis_host_ip sudo docker  run --name $rubis_container_name --network=$network_name -p 81:80 -e DBIP=$mysql_ip_adress -e DBUSER=root -e DBPASSWORD=$my_sql_password -e MYHOSTNAME=$MYHOSTNAME -d $rubis_image_name"

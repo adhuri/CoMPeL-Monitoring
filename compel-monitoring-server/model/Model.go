@@ -14,9 +14,10 @@ type Server struct {
 	tcpPort          string
 	restPort         string
 	influxServer     string
+	influxPort       string
 }
 
-func NewServer(tcpPort, udpPort, restPort, influxServer string) *Server {
+func NewServer(tcpPort, udpPort, restPort, influxServer string, influxPort string) *Server {
 	return &Server{
 		connectedClients: make(map[string]int64),
 		activeContainers: make(map[string][]string),
@@ -24,6 +25,7 @@ func NewServer(tcpPort, udpPort, restPort, influxServer string) *Server {
 		tcpPort:          tcpPort,
 		restPort:         restPort,
 		influxServer:     influxServer,
+		influxPort:       influxPort,
 	}
 }
 
@@ -102,6 +104,13 @@ func (server *Server) GetInfluxServer() string {
 	defer server.Unlock()
 
 	return server.influxServer
+}
+
+func (server *Server) GetInfluxPort() string {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.influxPort
 }
 
 func (server *Server) GetRestPort() string {

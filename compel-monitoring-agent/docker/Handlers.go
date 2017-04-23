@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -36,14 +35,18 @@ func (ds *DockerContainerStats) GetDockerStats(log *logrus.Logger) {
 	containerDataList := strings.Split(string(cmdOut), "\n")
 
 	if len(containerDataList) == 0 {
-		log.Errorln("Handlers.go - GetDockerStats() No containers running ")
+		log.Warnln("Handlers.go - GetDockerStats() No containers running ")
 	}
+	//log.Debugln("Refreshing DockerStats object for issue #5")
+	//ds = NewDockerContainerStats()
 
 	for _, el := range containerDataList {
 		if el != "" {
 			// All elements should be parseable
-			containerId, cpuPercent, memoryPecent := parseContainerDetails(el, log)
-			ds.Stats[containerId] = StatType{CpuPercent: cpuPercent, MemoryPercent: memoryPecent}
+			containerId, cpuPercent, memoryPercent := parseContainerDetails(el, log)
+			//ds.Stats[containerId] = NewStatType(cpuPercent, memoryPercent)
+			// To avoid lock issues
+			ds.SetContainerStat(containerId, NewStatType(cpuPercent, memoryPercent))
 		}
 	}
 
@@ -79,7 +82,7 @@ func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string
 	defer utils.TimeTrack(time.Now(), "dockerstats.go-GetRunningDockerContainers")
 
 	containerDataList := make([]string, 0, len(ds.Stats))
-	for k := range ds.Stats {
+	for k := range ds.GetAllContainerStat() {
 		containerDataList = append(containerDataList, k)
 	}
 
@@ -90,7 +93,7 @@ func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string
 	}
 	// Since it contains "\n"
 
-	fmt.Println(" Containers running ", containerDataList, len(containerDataList))
+	log.Infoln("Containers running ", len(containerDataList), containerDataList)
 	//return containerDataList[0 : len(containerDataList)-1]
 	return containerDataList[:]
 	//return make([]string, 4)

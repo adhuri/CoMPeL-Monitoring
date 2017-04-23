@@ -1,8 +1,12 @@
 package docker
 
+import "sync"
+
 // Hashmap to store the docker status output only once since it takes 2 seconds to call docker stats ( for correct cpu percent calculation)
 type DockerContainerStats struct {
-	Stats map[string]StatType
+	//sync.Mutex
+	sync.RWMutex
+	Stats map[string]*StatType
 }
 
 type StatType struct {
@@ -12,6 +16,36 @@ type StatType struct {
 
 func NewDockerContainerStats() *DockerContainerStats {
 	return &DockerContainerStats{
-		Stats: make(map[string]StatType),
+		Stats: make(map[string]*StatType),
 	}
+}
+
+func NewStatType(cpuPercent float64, memoryPercent float64) *StatType {
+	return &StatType{CpuPercent: cpuPercent, MemoryPercent: memoryPercent}
+}
+
+func (ds *DockerContainerStats) SetContainerStat(containerID string, st *StatType) {
+	ds.Lock()
+	defer ds.Unlock()
+	ds.Stats[containerID] = st
+}
+
+func (ds *DockerContainerStats) GetContainerStat(containerID string) (st *StatType, exists bool) {
+	ds.RLock()
+	defer ds.RUnlock()
+	stat, exists := ds.Stats[containerID]
+	return stat, exists
+}
+
+func (ds *DockerContainerStats) GetAllContainerStat() (st map[string]*StatType) {
+	ds.RLock()
+	defer ds.RUnlock()
+	return ds.Stats
+}
+
+func ClearDockerContainerList(ds *DockerContainerStats) *DockerContainerStats {
+	ds.Lock()
+	defer ds.Unlock()
+
+	return NewDockerContainerStats()
 }

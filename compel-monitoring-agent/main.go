@@ -120,18 +120,21 @@ func main() {
 	// After successful connection update flag on client
 	client.UpdateServerStatus(true)
 
+	// Choosing RuncStats or DockerStats
+	statsObject := DockerStats{dockerContainerStats: docker.NewDockerContainerStats()}
+
 	// Initialise Stats Timer
 	statsTimer := time.NewTicker(time.Second * 2).C
 	aliveTimer := time.NewTicker(time.Second * 10).C
 	var counter uint64 = 0
 
-	// Choosing RuncStats or DockerStats
-	statsObject := DockerStats{dockerContainerStats: docker.NewDockerContainerStats()}
-
 	for {
 		select {
 		case <-statsTimer:
 			{
+				// Refresh object
+				statsObject.dockerContainerStats = docker.ClearDockerContainerList(statsObject.dockerContainerStats)
+
 				if client.GetServerStatus() {
 					counter++
 					statsObject.sendStats(client, counter)
