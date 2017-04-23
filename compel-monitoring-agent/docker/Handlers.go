@@ -60,7 +60,7 @@ func (ds *DockerContainerStats) GetDockerStats(log *logrus.Logger) {
 func parseContainerDetails(line string, log *logrus.Logger) (containerID string, cpuPercent float64, memoryPercent float64) {
 	// Since the format is colon seperated
 	containerDetails := strings.Split(line, ":")
-	log.Errorln(containerDetails)
+	log.Infoln(containerDetails)
 
 	if len(containerDetails) > 3 {
 		log.Errorln("parseContainerDetails() - Seems you added NetBlock or Disk IO but forgot to parse it")

@@ -133,7 +133,7 @@ func main() {
 		case <-statsTimer:
 			{
 				// Refresh object
-				statsObject.dockerContainerStats = docker.ClearDockerContainerList(statsObject.dockerContainerStats)
+				statsObject.ClearDockerContainerList()
 
 				if client.GetServerStatus() {
 					counter++
