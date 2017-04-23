@@ -1,15 +1,10 @@
 package docker
 
-import (
-	"time"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/adhuri/Compel-Monitoring/utils"
-)
+import "github.com/Sirupsen/logrus"
 
 //CalculateMemoryPercentage %Memory Used by the container
 func CalculateMemoryPercentage(ds *DockerContainerStats, containerID string, log *logrus.Logger) (memoryPercent float64) {
-	defer utils.TimeTrack(time.Now(), "Stats.go- Docker CalculateMemoryPercentage")
+	//defer utils.TimeTrack(time.Now(), "Stats.go- Docker CalculateMemoryPercentage")
 	memoryPercent = 0.0
 
 	if stat, exists := ds.GetContainerStat(containerID); exists {
@@ -26,7 +21,7 @@ func CalculateMemoryPercentage(ds *DockerContainerStats, containerID string, log
 //CalculateCPUUsedPercentage %CPU Used by the container
 func CalculateCPUUsedPercentage(ds *DockerContainerStats, containerID string, log *logrus.Logger) (cpuPercent float64) {
 
-	defer utils.TimeTrack(time.Now(), "stats.go- Docker CalculateCPUUsedPercentage")
+	//defer utils.TimeTrack(time.Now(), "stats.go- Docker CalculateCPUUsedPercentage")
 	cpuPercent = 0.0
 	if stat, exists := ds.GetContainerStat(containerID); exists {
 		//do something here

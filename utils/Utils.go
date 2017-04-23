@@ -2,9 +2,10 @@ package utils
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
 func CheckIPAddressesEqual(ip1 net.IP, ip2 net.IP) bool {
@@ -93,7 +94,7 @@ func IpToString(hostIP []byte) string {
 
 // Time any function in the repository -
 // Usage - defer utils.TimeTrack(time.Now(), "Filename.go-FunctionName")
-func TimeTrack(start time.Time, name string) {
+func TimeTrack(start time.Time, name string, log *logrus.Logger) {
 	elapsed := time.Since(start)
-	fmt.Printf(name, " took ", elapsed, "\n")
+	log.Infoln("TimeTrack :", name, " took ", elapsed)
 }

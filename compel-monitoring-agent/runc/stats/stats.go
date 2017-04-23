@@ -5,11 +5,9 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
-	"github.com/adhuri/Compel-Monitoring/utils"
 	"github.com/opencontainers/runc/libcontainer/system"
 )
 
@@ -72,7 +70,7 @@ func getContainerMemory(container string, log *logrus.Logger) (memoryused int64)
 //GetSystemMemory Total Memory for the system using cgroups from /sys/fs/cgroup/memory/user.slice/<containerName>/memory.stat
 func GetSystemMemory(log *logrus.Logger) (uint64, error) {
 	// We get System Memory from /proc/meminfo MemTotal
-	defer utils.TimeTrack(time.Now(), "Stats.go-GetSystemMemory")
+	//defer utils.TimeTrack(time.Now(), "Stats.go-GetSystemMemory")
 	var totalmemory uint64
 	contents, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {
@@ -103,7 +101,7 @@ func GetSystemMemory(log *logrus.Logger) (uint64, error) {
 
 //CalculateMemoryPercentage %Memory Used by the container
 func CalculateMemoryPercentage(client *model.Client, containerID string, log *logrus.Logger) (memorypercent float64) {
-	defer utils.TimeTrack(time.Now(), "Stats.go-CalculateMemoryPercentage")
+	//defer utils.TimeTrack(time.Now(), "Stats.go-CalculateMemoryPercentage")
 	//cmemory := getContainerMemory(containerID)
 	cmemory := getContainerMemory(containerID, log)
 	tmemory := client.GetTotalMemory() // Might return 0 if not set due to some issue. Log printed
@@ -155,7 +153,7 @@ func getContainerCPU(container string, log *logrus.Logger) (cpuused int64) {
 //GetSystemCPU Total CPU for the system using cgroups from /sys/fs/cgroup/memory/user.slice/<containerName>/memory.stat
 func GetSystemCPU(log *logrus.Logger) (int64, error) {
 	//Using Docker code from https://github.com/docker/docker/blob/cd6a61f1b17830464250406244ed8ef113db8a3c/daemon/stats/collector_unix.go
-	defer utils.TimeTrack(time.Now(), "Stats.go-GetSystemCPU")
+	//defer utils.TimeTrack(time.Now(), "Stats.go-GetSystemCPU")
 	const nanoSecondsPerSecond = 1e9
 
 	clockTicksPerSecond := int64(system.GetClockTicks())
@@ -192,7 +190,7 @@ func GetSystemCPU(log *logrus.Logger) (int64, error) {
 //CalculateCPUUsedPercentage %Memory Used by the container
 func CalculateCPUUsedPercentage(client *model.Client, containerID string, log *logrus.Logger) float64 {
 	//Modified From  https://github.com/docker/docker/blob/131e2bf12b2e1b3ee31b628a501f96bbb901f479/api/client/stats.go#L309
-	defer utils.TimeTrack(time.Now(), "Stats.go-CalculateCPUUsedPercentage")
+	//defer utils.TimeTrack(time.Now(), "Stats.go-CalculateCPUUsedPercentage")
 	cpuPercent := 0.0
 	// calculate the change for the cpu usage of the container in between readings
 	newContainerCPU := getContainerCPU(containerID, log)

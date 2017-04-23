@@ -79,7 +79,7 @@ func parseContainerDetails(line string, log *logrus.Logger) (containerID string,
 func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string {
 
 	//Track time using utils
-	defer utils.TimeTrack(time.Now(), "dockerstats.go-GetRunningDockerContainers")
+	defer utils.TimeTrack(time.Now(), "dockerstats.go-GetRunningDockerContainers", log)
 
 	containerDataList := make([]string, 0, len(ds.Stats))
 	for k := range ds.GetAllContainerStat() {
@@ -102,7 +102,7 @@ func GetRunningContainers(ds *DockerContainerStats, log *logrus.Logger) []string
 func GetContainerStats(ds *DockerContainerStats, containerID string, log *logrus.Logger) monitorProtocol.ContainerStats {
 
 	//Timing this function
-	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
+	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats", log)
 
 	//Calculating Memory Used
 	memoryPercentage := CalculateMemoryPercentage(ds, containerID, log)
