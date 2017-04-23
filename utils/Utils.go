@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"time"
 )
@@ -93,6 +94,6 @@ func IpToString(hostIP []byte) string {
 // Time any function in the repository -
 // Usage - defer utils.TimeTrack(time.Now(), "Filename.go-FunctionName")
 func TimeTrack(start time.Time, name string) {
-	//elapsed := time.Since(start)
-	//fmt.Printf("%s took %s", name, elapsed,"\n")
+	elapsed := time.Since(start)
+	fmt.Printf(name, " took ", elapsed, "\n")
 }
