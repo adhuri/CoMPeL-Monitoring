@@ -3,13 +3,11 @@ package runc
 import (
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
 	stats "github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/runc/stats"
 	monitorProtocol "github.com/adhuri/Compel-Monitoring/protocol"
-	utils "github.com/adhuri/Compel-Monitoring/utils"
 )
 
 // GetRunningContainers ... Function to get running containers ; Returns empty list if no container running
@@ -17,7 +15,7 @@ func GetRunningContainers(log *logrus.Logger) []string {
 
 	//Track time using utils
 
-	defer utils.TimeTrack(time.Now(), "Handlers.go-GetRunningContainers")
+	//defer utils.TimeTrack(time.Now(), "Handlers.go-GetRunningContainers")
 
 	//Defining byte buffer to store the output
 	var (
@@ -58,7 +56,7 @@ func GetRunningContainers(log *logrus.Logger) []string {
 func GetContainerStats(client *model.Client, containerID string, log *logrus.Logger) monitorProtocol.ContainerStats {
 
 	//Timing this function
-	defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
+	//defer utils.TimeTrack(time.Now(), "Handlers.go-GetContainerStats")
 
 	//Calculating Memory Used
 	memoryPercentage := stats.CalculateMemoryPercentage(client, containerID, log)
