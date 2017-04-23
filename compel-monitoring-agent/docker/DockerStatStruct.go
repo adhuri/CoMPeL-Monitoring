@@ -36,16 +36,3 @@ func (ds *DockerContainerStats) GetContainerStat(containerID string) (st *StatTy
 	stat, exists := ds.Stats[containerID]
 	return stat, exists
 }
-
-func (ds *DockerContainerStats) GetAllContainerStat() (st map[string]*StatType) {
-	ds.RLock()
-	defer ds.RUnlock()
-	return ds.Stats
-}
-
-func (ds *DockerContainerStats) ClearDockerContainerList() {
-	ds.Lock()
-	defer ds.Unlock()
-
-	ds = NewDockerContainerStats()
-}
