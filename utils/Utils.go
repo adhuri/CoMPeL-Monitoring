@@ -37,7 +37,56 @@ func GetIPAddressOfHost() (net.IP, error) {
 		return nil, err
 	}
 
+	interfaceMap := make(map[string]net.Interface)
+
+	for _, iface := range ifaces {
+		interfaceMap[iface.Name] = iface
+	}
+
+	if eth1, ok := interfaceMap["eth1"]; ok {
+		if eth1.Flags&net.FlagUp == 0 {
+			// Interfae down
+		}
+		if eth1.Flags&net.FlagLoopback != 0 {
+			// Loopback interface
+			goto NormalProcessing
+		}
+		addrs, err := eth1.Addrs()
+		if err != nil {
+			// If the interface is up but ip has not been set
+			goto NormalProcessing
+		}
+
+		// iterate over interface addresses
+		for _, addr := range addrs {
+			var ip net.IP
+			// check the type
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+
+			// If Loopback IP i.e. addresses like 127.*.*.*
+			if ip == nil || ip.IsLoopback() {
+				goto NormalProcessing
+			}
+
+			// Convert address to 4-byte form
+			ip = ip.To4()
+			if ip == nil {
+				goto NormalProcessing
+			}
+
+			// Copy the 4 bytes of IP to the slice passed as argument
+			return ip, nil
+		}
+
+	}
+
 	// Iterate over interface to find the right interface
+NormalProcessing:
 	for _, iface := range ifaces {
 		if iface.Flags&net.FlagUp == 0 {
 			// Interfae down
