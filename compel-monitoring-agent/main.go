@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"os"
 	"time"
@@ -95,6 +96,7 @@ func main() {
 	// Initialise Stats Timer
 	statsTimer := time.NewTicker(time.Second * 2).C
 	aliveTimer := time.NewTicker(time.Second * 10).C
+	statsPrintTimer := time.NewTicker(time.Second * 15).C
 	var counter uint64 = 0
 
 	for {
@@ -107,7 +109,10 @@ func main() {
 					statsObject.sendStats(client, counter)
 				} else {
 					log.Warnln("Server Offline .... Trying to Reconnect")
+					startTime := time.Now()
 					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
+					elapsedTime := time.Since(startTime)
+					client.SetConnectionTime(elapsedTime)
 					client.UpdateServerStatus(true)
 				}
 			}
@@ -122,8 +127,33 @@ func main() {
 					log.Infoln("Server is still Alive")
 				}
 			}
+		case <-statsPrintTimer:
+			{
+				PrintStats(client)
+			}
 		}
 	}
+
+}
+
+func PrintStats(client *model.Client) {
+
+	log.Infoln("")
+	fmt.Println("")
+	fmt.Println("\t\t Agent Statistics")
+	conectionTime := client.GetConnectionTime()
+	serverIp := client.GetServerIp()
+	serverStatus := client.GetServerStatus()
+	totalPacketsSent := client.GetTotalPacketsSent()
+	totalDataSent := client.GetTotalAmountDataSent()
+	averagePacketSize := float32(totalDataSent) / float32(totalPacketsSent)
+	fmt.Println("\t\t Connected To Server:         \t", serverIp)
+	fmt.Println("\t\t Conection Status:            \t", serverStatus)
+	fmt.Println("\t\t Conection Time:              \t", conectionTime)
+	fmt.Println("\t\t Total Packets Sent:          \t", totalPacketsSent)
+	fmt.Println("\t\t Total Data Sent (Bytes):     \t", totalDataSent)
+	fmt.Println("\t\t Average Message Size(Bytes): \t", averagePacketSize)
+	fmt.Println("")
 
 }
 
@@ -165,7 +195,7 @@ func (rcs *RuncStats) sendStats(client *model.Client, counter uint64) {
 	}
 	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
+	monitorProtocol.SendContainerStatistics(statsToSend, client, log)
 }
 
 func (dcs *DockerStats) worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64) {
@@ -197,6 +227,6 @@ func (dcs *DockerStats) sendStats(client *model.Client, counter uint64) {
 	}
 	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
+	monitorProtocol.SendContainerStatistics(statsToSend, client, log)
 
 }

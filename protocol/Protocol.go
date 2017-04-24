@@ -6,8 +6,10 @@ import (
 	"errors"
 	"net"
 	"time"
+	"unsafe"
 
 	logrus "github.com/Sirupsen/logrus"
+	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
 )
 
 func sendInitMessage(conn net.Conn, log *logrus.Logger) error {
@@ -80,7 +82,9 @@ func ConnectToServer(serverIp, tcpPort string, log *logrus.Logger) {
 	}
 }
 
-func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udpPort string, log *logrus.Logger) {
+func SendContainerStatistics(stringToSend []ContainerStats, client *model.Client, log *logrus.Logger) {
+	serverIp := client.GetServerIp()
+	udpPort := client.GetServerUdpPort()
 	udpAddr, err := net.ResolveUDPAddr("udp4", serverIp+":"+udpPort)
 	if err != nil {
 		log.Errorln("Error in Resolving Address " + err.Error())
@@ -106,6 +110,10 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+
+		sizeOfPacket := int64(unsafe.Sizeof(statsMessage))
+		client.UpdateTotalAmountDataSent(sizeOfPacket)
+		client.IncrementTotalPacketsSent()
 
 		log.Info("No Container Running But Still Sending the HEART BEAT! ")
 		return
@@ -139,7 +147,11 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 				log.Errorln("Error in Sending Stat Message")
 				return
 			}
-			//abc = unsafe.Sizeof(statsMessage)
+
+			sizeOfPacket := int64(unsafe.Sizeof(statsMessage))
+			client.UpdateTotalAmountDataSent(sizeOfPacket)
+			client.IncrementTotalPacketsSent()
+
 			log.Debugln("Stats Message = ", statsMessage)
 			log.Infoln("Stats Message Sent.\n")
 
@@ -172,6 +184,11 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+
+		sizeOfPacket := int64(unsafe.Sizeof(statsMessage))
+		client.UpdateTotalAmountDataSent(sizeOfPacket)
+		client.IncrementTotalPacketsSent()
+
 		log.Debugln("Stats Message = ", statsMessage)
 		log.Infoln("Stats Message Sent \n")
 

@@ -175,7 +175,7 @@ func (client *Client) GetTotalAmountDataSent() int64 {
 	return client.totalAmountOfDataSent
 }
 
-func (client *Client) SetTotalAmountDataSent(dataSize int64) {
+func (client *Client) UpdateTotalAmountDataSent(dataSize int64) {
 	client.Lock()
 	defer client.Unlock()
 	client.totalAmountOfDataSent += dataSize
