@@ -30,13 +30,15 @@ type Client struct {
 
 func NewClient(serverIp, tcpPort, udpPort string) *Client {
 	return &Client{
-		containerStats:  make(map[string]int64),
-		containerStatus: make(map[string]uint64),
-		oldTotalCPU:     -1, // Set as -1 if first time CPU calculate or Stale CPU
-		serverAlive:     false,
-		serverIp:        serverIp,
-		serverUdpPort:   udpPort,
-		serverTcpPort:   tcpPort,
+		containerStats:         make(map[string]int64),
+		containerStatus:        make(map[string]uint64),
+		oldTotalCPU:            -1, // Set as -1 if first time CPU calculate or Stale CPU
+		serverAlive:            false,
+		serverIp:               serverIp,
+		serverUdpPort:          udpPort,
+		serverTcpPort:          tcpPort,
+		totalStatsMessagesSent: 0,
+		totalAmountOfDataSent:  0,
 	}
 }
 

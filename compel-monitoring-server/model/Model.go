@@ -8,24 +8,28 @@ import (
 
 type Server struct {
 	sync.Mutex
-	connectedClients map[string]int64
-	activeContainers map[string][]string
-	udpPort          string
-	tcpPort          string
-	restPort         string
-	influxServer     string
-	influxPort       string
+	connectedClients     map[string]int64
+	activeContainers     map[string][]string
+	udpPort              string
+	tcpPort              string
+	restPort             string
+	influxServer         string
+	influxPort           string
+	totalPacketsReceived int64
+	statsMap             map[string]time.Time
 }
 
 func NewServer(tcpPort, udpPort, restPort, influxServer string, influxPort string) *Server {
 	return &Server{
-		connectedClients: make(map[string]int64),
-		activeContainers: make(map[string][]string),
-		udpPort:          udpPort,
-		tcpPort:          tcpPort,
-		restPort:         restPort,
-		influxServer:     influxServer,
-		influxPort:       influxPort,
+		connectedClients:     make(map[string]int64),
+		activeContainers:     make(map[string][]string),
+		udpPort:              udpPort,
+		tcpPort:              tcpPort,
+		restPort:             restPort,
+		influxServer:         influxServer,
+		influxPort:           influxPort,
+		totalPacketsReceived: 0,
+		statsMap:             make(map[string]time.Time),
 	}
 }
 
@@ -118,4 +122,32 @@ func (server *Server) GetRestPort() string {
 	defer server.Unlock()
 
 	return server.restPort
+}
+
+func (server *Server) GetPacketReceivedCounter() int64 {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.totalPacketsReceived
+}
+
+func (server *Server) IncrementPacketReceivedCounter() {
+	server.Lock()
+	defer server.Unlock()
+
+	server.totalPacketsReceived += 1
+}
+
+func (server *Server) GetConectionTime(agentIp string) time.Time {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.statsMap[agentIp]
+}
+
+func (server *Server) UpdateStatsMap(agentIp string, connectionTime time.Time) {
+	server.Lock()
+	defer server.Unlock()
+
+	server.statsMap[agentIp] = connectionTime
 }

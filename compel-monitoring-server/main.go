@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	logrus "github.com/Sirupsen/logrus"
 	db "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/db"
@@ -62,6 +63,7 @@ func handleConnectMessage(conn net.Conn, server *model.Server) {
 	}
 
 	server.UpdateState(connectMessage.AgentIP)
+	server.UpdateStatsMap(connectMessage.AgentIP.String(), time.Now())
 
 	// Create a ConnectAck Message
 	connectAck := monitorProtocol.ConnectReply{
@@ -147,11 +149,12 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 			containerList = append(containerList, containerId)
 		}
 
-		db.StoreData(agentIp.String(), statsMessage.Data, server.GetInfluxServer(), server.GetInfluxPort())
+		db.StoreData(agentIp.String(), statsMessage.Data, server.GetInfluxServer(), server.GetInfluxPort(), log)
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		log.Infoln("Agent " + agentIp.String() + " Validated")
 		server.UpdateState(agentIp)
 		server.SetActiveContainersForAgent(agentIp.String(), containerList)
+		server.IncrementPacketReceivedCounter()
 	}
 	//conn.WriteToUDP([]byte("Hello Client"), addr)
 
