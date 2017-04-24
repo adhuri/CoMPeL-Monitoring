@@ -43,43 +43,6 @@ func worker(client *model.Client, containerId string, containerStats chan monito
 	containerStats <- stats
 }
 
-//
-// func sendStats(client *model.Client, counter uint64) {
-//
-// 	//Set SystemCPU usage
-// 	sysCPUusage, err := stats.GetSystemCPU(log)
-// 	if err != nil {
-// 		log.Errorln("Cannot Get System CPU")
-// 	} else {
-// 		client.SetTotalCPU(sysCPUusage)
-// 	}
-// 	//Set Memory Limit
-// 	sysMemoryLimit, err := stats.GetSystemMemory(log)
-// 	if err != nil {
-// 		log.Errorln("Cannot Get System Memory")
-// 	} else {
-// 		client.SetTotalMemory(sysMemoryLimit)
-// 	}
-//
-// 	var containers []string = runc.GetRunningContainers(log)
-// 	numOfWorkers := len(containers)
-// 	containerStats := make(chan monitorProtocol.ContainerStats, numOfWorkers)
-// 	for i := 0; i < numOfWorkers; i++ {
-// 		client.UpdateContainerCounter(containers[i], counter)
-// 		go worker(client, containers[i], containerStats, counter)
-// 	}
-//
-// 	//var buffer bytes.Buffer
-// 	var statsToSend = make([]monitorProtocol.ContainerStats, numOfWorkers)
-// 	for i := 0; i < numOfWorkers; i++ {
-// 		//buffer.WriteString(<-containerStats)
-// 		statsToSend[i] = <-containerStats
-// 	}
-// 	//stringToSend := buffer.String()
-//
-// 	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
-// }
-//
 //Interface to choose Docker or RunC
 type StatsInterface interface {
 	worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64)
@@ -116,7 +79,12 @@ func main() {
 
 	// Connect to monitoring server
 	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
+
+	startTime := time.Now()
 	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
+	elapsedTime := time.Since(startTime)
+	log.Infoln("Time Take to connect to the server is : " + elapsedTime.String())
+	client.SetConnectionTime(elapsedTime)
 
 	// After successful connection update flag on client
 	client.UpdateServerStatus(true)
@@ -134,9 +102,6 @@ func main() {
 		case <-statsTimer:
 			{
 				// Refresh object
-				//*statsObject.ClearDockerContainerList()
-				//statsObject.dockerContainerStats.ClearDockerContainerList()
-
 				if client.GetServerStatus() {
 					counter++
 					statsObject.sendStats(client, counter)
@@ -214,7 +179,6 @@ func (dcs *DockerStats) sendStats(client *model.Client, counter uint64) {
 
 	var containers []string = docker.GetRunningContainers(dcs.dockerContainerStats, log)
 
-	//fmt.Println("CCCCCCCCCCCCContainers", containers)
 	//	var containers []string = docker.GetRunningContainers(dcs.dockerContainerStats, log)
 	log.Infoln("Containers running ", len(containers), containers)
 

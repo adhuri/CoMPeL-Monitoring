@@ -139,6 +139,7 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 				log.Errorln("Error in Sending Stat Message")
 				return
 			}
+			//abc = unsafe.Sizeof(statsMessage)
 			log.Debugln("Stats Message = ", statsMessage)
 			log.Infoln("Stats Message Sent.\n")
 
