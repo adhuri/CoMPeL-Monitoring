@@ -5,10 +5,12 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	logrus "github.com/Sirupsen/logrus"
 	db "github.com/adhuri/Compel-Monitoring/compel-monitoring-server/db"
@@ -62,6 +64,7 @@ func handleConnectMessage(conn net.Conn, server *model.Server) {
 	}
 
 	server.UpdateState(connectMessage.AgentIP)
+	server.UpdateStatsMap(connectMessage.AgentIP.String(), time.Now())
 
 	// Create a ConnectAck Message
 	connectAck := monitorProtocol.ConnectReply{
@@ -147,11 +150,12 @@ func handleMonitorMessage(conn *net.UDPConn, server *model.Server) {
 			containerList = append(containerList, containerId)
 		}
 
-		db.StoreData(agentIp.String(), statsMessage.Data, server.GetInfluxServer(), server.GetInfluxPort())
+		db.StoreData(agentIp.String(), statsMessage.Data, server, log)
 		//influx.AddPoint(agentIp.String(), containerId, cpuUsage, memoryUsage, timestamp)
 		log.Infoln("Agent " + agentIp.String() + " Validated")
 		server.UpdateState(agentIp)
 		server.SetActiveContainersForAgent(agentIp.String(), containerList)
+		server.IncrementPacketReceivedCounter()
 	}
 	//conn.WriteToUDP([]byte("Hello Client"), addr)
 
@@ -181,11 +185,6 @@ func udpListener(wg *sync.WaitGroup, server *model.Server) {
 
 func HandleQuery(w http.ResponseWriter, req *http.Request) {
 	queryResponse := monitorProtocol.GenerateQueryResponse(server)
-	// encoder := gob.NewEncoder(w)
-	// err := encoder.Encode(queryResponse)
-	// if err != nil {
-	// 	log.Errorln("Response to the Query has been found")
-	// }
 	json.NewEncoder(w).Encode(queryResponse)
 }
 
@@ -196,6 +195,38 @@ func predictionQueryListener(wg *sync.WaitGroup, server *model.Server) {
 	err := http.ListenAndServe(":"+server.GetRestPort(), router)
 	if err != nil {
 		log.Fatalln("Unable to Start REST Server")
+	}
+}
+
+func PrintStatisticsUtility(wg *sync.WaitGroup, server *model.Server) {
+	defer wg.Done()
+	statsTimer := time.NewTicker(time.Second * 15).C
+	for {
+		select {
+		case <-statsTimer:
+			{
+				log.Infoln("")
+				fmt.Println("")
+				fmt.Println("\t\t Server Statistics")
+				influxServerIp := server.GetInfluxServer()
+				totalWriteTime := server.GetDBWriteTime()
+				totalPointsSaved := server.GetPointsSavedInDBCounter()
+				avgWriteTime := totalWriteTime.Seconds() / float64(totalPointsSaved)
+				fmt.Println("\t\t Average DB Write Time :     \t", avgWriteTime, " seconds")
+				fmt.Println("\t\t Connected To Influx Server: \t", influxServerIp)
+				totalPacketReceived := server.GetPacketReceivedCounter()
+				activeAgents := []string{}
+				server.RetrieveAllActiveClients(&activeAgents)
+				for _, agent := range activeAgents {
+					connectedAt := server.GetConectionTime(agent)
+					fmt.Println("\t\t Connected Agent IP:         \t", agent)
+					elapsed := time.Since(connectedAt)
+					fmt.Println("\t\t Agent Active Since:         \t", elapsed.String())
+				}
+				fmt.Println("\t\t Total Packets Received:     \t", totalPacketReceived)
+				fmt.Println("")
+			}
+		}
 	}
 }
 
@@ -219,11 +250,12 @@ func main() {
 
 	server = model.NewServer(*serverTcpPort, *serverUdpPort, *restPort, *influxServer, *influxPort)
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
 	go tcpListener(&wg, server)
 	go udpListener(&wg, server)
 	go predictionQueryListener(&wg, server)
+	go PrintStatisticsUtility(&wg, server)
 
 	wg.Wait()
 

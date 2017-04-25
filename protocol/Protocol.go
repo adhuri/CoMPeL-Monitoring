@@ -8,6 +8,7 @@ import (
 	"time"
 
 	logrus "github.com/Sirupsen/logrus"
+	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
 )
 
 func sendInitMessage(conn net.Conn, log *logrus.Logger) error {
@@ -80,7 +81,9 @@ func ConnectToServer(serverIp, tcpPort string, log *logrus.Logger) {
 	}
 }
 
-func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udpPort string, log *logrus.Logger) {
+func SendContainerStatistics(stringToSend []ContainerStats, client *model.Client, log *logrus.Logger) {
+	serverIp := client.GetServerIp()
+	udpPort := client.GetServerUdpPort()
 	udpAddr, err := net.ResolveUDPAddr("udp4", serverIp+":"+udpPort)
 	if err != nil {
 		log.Errorln("Error in Resolving Address " + err.Error())
@@ -106,6 +109,10 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+		sizeOfPacket := int64(len(buf.Bytes()))
+
+		client.UpdateTotalAmountDataSent(sizeOfPacket)
+		client.IncrementTotalPacketsSent()
 
 		log.Info("No Container Running But Still Sending the HEART BEAT! ")
 		return
@@ -120,7 +127,6 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 		if totalSizeOfData <= 576 {
 			// Increment End Pointer if we can add more
 			endPointer++
-
 			// Debug Logging
 			log.WithFields(logrus.Fields{
 				"Total_Data_To_Send":  len(stringToSend),
@@ -139,6 +145,12 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 				log.Errorln("Error in Sending Stat Message")
 				return
 			}
+
+			sizeOfPacket := int64(len(buf.Bytes()))
+
+			client.UpdateTotalAmountDataSent(sizeOfPacket)
+			client.IncrementTotalPacketsSent()
+
 			log.Debugln("Stats Message = ", statsMessage)
 			log.Infoln("Stats Message Sent.\n")
 
@@ -171,6 +183,11 @@ func SendContainerStatistics(stringToSend []ContainerStats, serverIp string, udp
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+		sizeOfPacket := int64(len(buf.Bytes()))
+
+		client.UpdateTotalAmountDataSent(sizeOfPacket)
+		client.IncrementTotalPacketsSent()
+
 		log.Debugln("Stats Message = ", statsMessage)
 		log.Infoln("Stats Message Sent \n")
 

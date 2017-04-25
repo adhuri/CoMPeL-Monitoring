@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"sync"
+	"time"
 )
 
 type statType struct {
@@ -13,26 +14,31 @@ var CPU_STATS = statType{"CPU"}
 
 type Client struct {
 	sync.RWMutex
-	containerStats  map[string]int64
-	containerStatus map[string]uint64
-	oldTotalCPU     int64 // Since Difference of CPU is stored for system
-	newTotalCPU     int64 // Since Difference of CPU is stored for system
-	totalMemory     uint64
-	serverAlive     bool
-	serverIp        string
-	serverUdpPort   string
-	serverTcpPort   string
+	containerStats         map[string]int64
+	containerStatus        map[string]uint64
+	oldTotalCPU            int64 // Since Difference of CPU is stored for system
+	newTotalCPU            int64 // Since Difference of CPU is stored for system
+	totalMemory            uint64
+	serverAlive            bool
+	serverIp               string
+	serverUdpPort          string
+	serverTcpPort          string
+	connectionTime         time.Duration
+	totalStatsMessagesSent int64
+	totalAmountOfDataSent  int64
 }
 
 func NewClient(serverIp, tcpPort, udpPort string) *Client {
 	return &Client{
-		containerStats:  make(map[string]int64),
-		containerStatus: make(map[string]uint64),
-		oldTotalCPU:     -1, // Set as -1 if first time CPU calculate or Stale CPU
-		serverAlive:     false,
-		serverIp:        serverIp,
-		serverUdpPort:   udpPort,
-		serverTcpPort:   tcpPort,
+		containerStats:         make(map[string]int64),
+		containerStatus:        make(map[string]uint64),
+		oldTotalCPU:            -1, // Set as -1 if first time CPU calculate or Stale CPU
+		serverAlive:            false,
+		serverIp:               serverIp,
+		serverUdpPort:          udpPort,
+		serverTcpPort:          tcpPort,
+		totalStatsMessagesSent: 0,
+		totalAmountOfDataSent:  0,
 	}
 }
 
@@ -139,4 +145,40 @@ func (client *Client) GetServerIp() string {
 	defer client.RUnlock()
 	return client.serverIp
 
+}
+
+func (client *Client) GetConnectionTime() time.Duration {
+	client.RLock()
+	defer client.RUnlock()
+	return client.connectionTime
+}
+
+func (client *Client) SetConnectionTime(timeTaken time.Duration) {
+	client.Lock()
+	defer client.Unlock()
+	client.connectionTime = timeTaken
+}
+
+func (client *Client) GetTotalPacketsSent() int64 {
+	client.RLock()
+	defer client.RUnlock()
+	return client.totalStatsMessagesSent
+}
+
+func (client *Client) IncrementTotalPacketsSent() {
+	client.Lock()
+	defer client.Unlock()
+	client.totalStatsMessagesSent += 1
+}
+
+func (client *Client) GetTotalAmountDataSent() int64 {
+	client.RLock()
+	defer client.RUnlock()
+	return client.totalAmountOfDataSent
+}
+
+func (client *Client) UpdateTotalAmountDataSent(dataSize int64) {
+	client.Lock()
+	defer client.Unlock()
+	client.totalAmountOfDataSent += dataSize
 }

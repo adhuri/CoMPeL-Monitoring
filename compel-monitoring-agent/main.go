@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"os"
 	"time"
@@ -43,43 +44,6 @@ func worker(client *model.Client, containerId string, containerStats chan monito
 	containerStats <- stats
 }
 
-//
-// func sendStats(client *model.Client, counter uint64) {
-//
-// 	//Set SystemCPU usage
-// 	sysCPUusage, err := stats.GetSystemCPU(log)
-// 	if err != nil {
-// 		log.Errorln("Cannot Get System CPU")
-// 	} else {
-// 		client.SetTotalCPU(sysCPUusage)
-// 	}
-// 	//Set Memory Limit
-// 	sysMemoryLimit, err := stats.GetSystemMemory(log)
-// 	if err != nil {
-// 		log.Errorln("Cannot Get System Memory")
-// 	} else {
-// 		client.SetTotalMemory(sysMemoryLimit)
-// 	}
-//
-// 	var containers []string = runc.GetRunningContainers(log)
-// 	numOfWorkers := len(containers)
-// 	containerStats := make(chan monitorProtocol.ContainerStats, numOfWorkers)
-// 	for i := 0; i < numOfWorkers; i++ {
-// 		client.UpdateContainerCounter(containers[i], counter)
-// 		go worker(client, containers[i], containerStats, counter)
-// 	}
-//
-// 	//var buffer bytes.Buffer
-// 	var statsToSend = make([]monitorProtocol.ContainerStats, numOfWorkers)
-// 	for i := 0; i < numOfWorkers; i++ {
-// 		//buffer.WriteString(<-containerStats)
-// 		statsToSend[i] = <-containerStats
-// 	}
-// 	//stringToSend := buffer.String()
-//
-// 	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
-// }
-//
 //Interface to choose Docker or RunC
 type StatsInterface interface {
 	worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64)
@@ -116,7 +80,12 @@ func main() {
 
 	// Connect to monitoring server
 	client := model.NewClient(*serverIp, *serverTcpPort, *serverUdpPort)
+
+	startTime := time.Now()
 	monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
+	elapsedTime := time.Since(startTime)
+	log.Infoln("Time Take to connect to the server is : " + elapsedTime.String())
+	client.SetConnectionTime(elapsedTime)
 
 	// After successful connection update flag on client
 	client.UpdateServerStatus(true)
@@ -127,6 +96,7 @@ func main() {
 	// Initialise Stats Timer
 	statsTimer := time.NewTicker(time.Second * 2).C
 	aliveTimer := time.NewTicker(time.Second * 10).C
+	statsPrintTimer := time.NewTicker(time.Second * 15).C
 	var counter uint64 = 0
 
 	for {
@@ -134,15 +104,17 @@ func main() {
 		case <-statsTimer:
 			{
 				// Refresh object
-				//*statsObject.ClearDockerContainerList()
-				//statsObject.dockerContainerStats.ClearDockerContainerList()
-
 				if client.GetServerStatus() {
 					counter++
 					statsObject.sendStats(client, counter)
 				} else {
 					log.Warnln("Server Offline .... Trying to Reconnect")
+
+					startTime := time.Now()
 					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
+					elapsedTime := time.Since(startTime)
+
+					client.SetConnectionTime(elapsedTime)
 					client.UpdateServerStatus(true)
 				}
 			}
@@ -157,8 +129,33 @@ func main() {
 					log.Infoln("Server is still Alive")
 				}
 			}
+		case <-statsPrintTimer:
+			{
+				PrintStats(client)
+			}
 		}
 	}
+
+}
+
+func PrintStats(client *model.Client) {
+
+	log.Infoln("")
+	fmt.Println("")
+	fmt.Println("\t\t Agent Statistics")
+	conectionTime := client.GetConnectionTime()
+	serverIp := client.GetServerIp()
+	serverStatus := client.GetServerStatus()
+	totalPacketsSent := client.GetTotalPacketsSent()
+	totalDataSent := client.GetTotalAmountDataSent()
+	averagePacketSize := float32(totalDataSent) / float32(totalPacketsSent)
+	fmt.Println("\t\t Connected To Server:         \t", serverIp)
+	fmt.Println("\t\t Conection Status:            \t", serverStatus)
+	fmt.Println("\t\t Conection Time:              \t", conectionTime)
+	fmt.Println("\t\t Total Packets Sent:          \t", totalPacketsSent)
+	fmt.Println("\t\t Total Data Sent (Bytes):     \t", totalDataSent)
+	fmt.Println("\t\t Average Message Size(Bytes): \t", averagePacketSize)
+	fmt.Println("")
 
 }
 
@@ -200,7 +197,7 @@ func (rcs *RuncStats) sendStats(client *model.Client, counter uint64) {
 	}
 	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
+	monitorProtocol.SendContainerStatistics(statsToSend, client, log)
 }
 
 func (dcs *DockerStats) worker(client *model.Client, containerId string, containerStats chan monitorProtocol.ContainerStats, currentCounter uint64) {
@@ -214,7 +211,6 @@ func (dcs *DockerStats) sendStats(client *model.Client, counter uint64) {
 
 	var containers []string = docker.GetRunningContainers(dcs.dockerContainerStats, log)
 
-	//fmt.Println("CCCCCCCCCCCCContainers", containers)
 	//	var containers []string = docker.GetRunningContainers(dcs.dockerContainerStats, log)
 	log.Infoln("Containers running ", len(containers), containers)
 
@@ -233,6 +229,6 @@ func (dcs *DockerStats) sendStats(client *model.Client, counter uint64) {
 	}
 	//stringToSend := buffer.String()
 
-	monitorProtocol.SendContainerStatistics(statsToSend, client.GetServerIp(), client.GetServerUdpPort(), log)
+	monitorProtocol.SendContainerStatistics(statsToSend, client, log)
 
 }
