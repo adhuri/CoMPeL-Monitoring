@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"net"
@@ -62,6 +63,30 @@ func checkIfServerIsAlive(client *model.Client) bool {
 	if err != nil {
 		return false
 	}
+	connectMessage := *monitorProtocol.NewConnectRequest()
+	encoder := gob.NewEncoder(conn)
+	err = encoder.Encode(connectMessage)
+	if err != nil {
+		// If error occurs in sending a connect message to server then return
+		return false
+	}
+
+	// read ack from the server
+	serverReply := monitorProtocol.ConnectReply{}
+	decoder := gob.NewDecoder(conn)
+	err = decoder.Decode(&serverReply)
+	if err != nil {
+		// If error occurs while reading ACK from server then return
+		return false
+	}
+
+	// Validate server respose
+	var isSucees bool = monitorProtocol.ValidateResponse(connectMessage, serverReply)
+	if !isSucees {
+		return false
+	}
+
+	// If everything goes well return nil error
 	conn.Close()
 	return true
 }

@@ -22,7 +22,7 @@ type ConnectReply struct {
 func ValidateResponse(connectMessage ConnectRequest, ConnectAck ConnectReply) bool {
 	// validate the response from the server
 	// verify if the messageID of request and response is same and even the host
-	return utils.CheckIPAddressesEqual(connectMessage.AgentIP, ConnectAck.AgentIP) && connectMessage.MessageId == ConnectAck.MessageId
+	return utils.CheckIPAddressesEqual(connectMessage.AgentIP, ConnectAck.AgentIP) && connectMessage.MessageId == ConnectAck.MessageId && ConnectAck.IsSuccessfull == 1
 }
 
 func NewConnectRequest() *ConnectRequest {

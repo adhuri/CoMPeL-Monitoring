@@ -46,7 +46,7 @@ func init() {
 
 func handleConnectMessage(conn net.Conn, server *model.Server) {
 	// When everything is done close the connection
-	defer conn.Close()
+	// defer conn.Close()
 
 	// Read the ConnectRequest
 	connectMessage := monitorProtocol.ConnectRequest{}
@@ -63,8 +63,12 @@ func handleConnectMessage(conn net.Conn, server *model.Server) {
 		log.Debugln("Connect Request Content : ", connectMessage)
 	}
 
-	server.UpdateState(connectMessage.AgentIP)
-	server.UpdateStatsMap(connectMessage.AgentIP.String(), time.Now())
+	if server.IsAgentConnected(connectMessage.AgentIP) {
+		server.UpdateState(connectMessage.AgentIP)
+	} else {
+		server.UpdateState(connectMessage.AgentIP)
+		server.UpdateStatsMap(connectMessage.AgentIP.String(), time.Now())
+	}
 
 	// Create a ConnectAck Message
 	connectAck := monitorProtocol.ConnectReply{
