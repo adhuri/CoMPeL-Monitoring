@@ -189,6 +189,7 @@ func udpListener(wg *sync.WaitGroup, server *model.Server) {
 
 func HandleQuery(w http.ResponseWriter, req *http.Request) {
 	queryResponse := monitorProtocol.GenerateQueryResponse(server)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(queryResponse)
 }
 
