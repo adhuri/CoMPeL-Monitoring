@@ -8,28 +8,32 @@ import (
 
 type Server struct {
 	sync.Mutex
-	connectedClients     map[string]int64
-	activeContainers     map[string][]string
-	udpPort              string
-	tcpPort              string
-	restPort             string
-	influxServer         string
-	influxPort           string
-	totalPacketsReceived int64
-	statsMap             map[string]time.Time
+	connectedClients          map[string]int64
+	activeContainers          map[string][]string
+	udpPort                   string
+	tcpPort                   string
+	restPort                  string
+	influxServer              string
+	influxPort                string
+	totalPacketsReceived      int64
+	statsMap                  map[string]time.Time
+	pointsSavedInDB           int64
+	totalTimeTakenToStoreInDB time.Duration
 }
 
 func NewServer(tcpPort, udpPort, restPort, influxServer string, influxPort string) *Server {
 	return &Server{
-		connectedClients:     make(map[string]int64),
-		activeContainers:     make(map[string][]string),
-		udpPort:              udpPort,
-		tcpPort:              tcpPort,
-		restPort:             restPort,
-		influxServer:         influxServer,
-		influxPort:           influxPort,
-		totalPacketsReceived: 0,
-		statsMap:             make(map[string]time.Time),
+		connectedClients:          make(map[string]int64),
+		activeContainers:          make(map[string][]string),
+		udpPort:                   udpPort,
+		tcpPort:                   tcpPort,
+		restPort:                  restPort,
+		influxServer:              influxServer,
+		influxPort:                influxPort,
+		totalPacketsReceived:      0,
+		statsMap:                  make(map[string]time.Time),
+		totalTimeTakenToStoreInDB: time.Nanosecond,
+		pointsSavedInDB:           0,
 	}
 }
 
@@ -150,4 +154,32 @@ func (server *Server) UpdateStatsMap(agentIp string, connectionTime time.Time) {
 	defer server.Unlock()
 
 	server.statsMap[agentIp] = connectionTime
+}
+
+func (server *Server) GetPointsSavedInDBCounter() int64 {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.pointsSavedInDB
+}
+
+func (server *Server) IncrementPointsSavedInDBCounterCounter() {
+	server.Lock()
+	defer server.Unlock()
+
+	server.pointsSavedInDB += 1
+}
+
+func (server *Server) GetDBWriteTime() time.Duration {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.totalTimeTakenToStoreInDB
+}
+
+func (server *Server) UpdateDBWriteTime(writeTime time.Duration) {
+	server.Lock()
+	defer server.Unlock()
+
+	server.totalTimeTakenToStoreInDB += writeTime
 }
