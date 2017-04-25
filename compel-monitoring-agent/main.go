@@ -109,9 +109,11 @@ func main() {
 					statsObject.sendStats(client, counter)
 				} else {
 					log.Warnln("Server Offline .... Trying to Reconnect")
+
 					startTime := time.Now()
 					monitorProtocol.ConnectToServer(client.GetServerIp(), client.GetServerTcpPort(), log)
 					elapsedTime := time.Since(startTime)
+
 					client.SetConnectionTime(elapsedTime)
 					client.UpdateServerStatus(true)
 				}

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"net"
 	"time"
-	"unsafe"
 
 	logrus "github.com/Sirupsen/logrus"
 	"github.com/adhuri/Compel-Monitoring/compel-monitoring-agent/model"
@@ -110,8 +109,8 @@ func SendContainerStatistics(stringToSend []ContainerStats, client *model.Client
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+		sizeOfPacket := int64(len(buf.Bytes()))
 
-		sizeOfPacket := int64(unsafe.Sizeof(statsMessage))
 		client.UpdateTotalAmountDataSent(sizeOfPacket)
 		client.IncrementTotalPacketsSent()
 
@@ -128,7 +127,6 @@ func SendContainerStatistics(stringToSend []ContainerStats, client *model.Client
 		if totalSizeOfData <= 576 {
 			// Increment End Pointer if we can add more
 			endPointer++
-
 			// Debug Logging
 			log.WithFields(logrus.Fields{
 				"Total_Data_To_Send":  len(stringToSend),
@@ -148,7 +146,8 @@ func SendContainerStatistics(stringToSend []ContainerStats, client *model.Client
 				return
 			}
 
-			sizeOfPacket := int64(unsafe.Sizeof(statsMessage))
+			sizeOfPacket := int64(len(buf.Bytes()))
+
 			client.UpdateTotalAmountDataSent(sizeOfPacket)
 			client.IncrementTotalPacketsSent()
 
@@ -184,8 +183,8 @@ func SendContainerStatistics(stringToSend []ContainerStats, client *model.Client
 			log.Errorln("Error in Sending Stat Message")
 			return
 		}
+		sizeOfPacket := int64(len(buf.Bytes()))
 
-		sizeOfPacket := int64(unsafe.Sizeof(statsMessage))
 		client.UpdateTotalAmountDataSent(sizeOfPacket)
 		client.IncrementTotalPacketsSent()
 
