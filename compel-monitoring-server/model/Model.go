@@ -19,6 +19,7 @@ type Server struct {
 	statsMap                  map[string]time.Time
 	pointsSavedInDB           int64
 	totalTimeTakenToStoreInDB time.Duration
+	totalDataWrittenToDB      int64
 }
 
 func NewServer(tcpPort, udpPort, restPort, influxServer string, influxPort string) *Server {
@@ -34,6 +35,7 @@ func NewServer(tcpPort, udpPort, restPort, influxServer string, influxPort strin
 		statsMap:                  make(map[string]time.Time),
 		totalTimeTakenToStoreInDB: time.Nanosecond,
 		pointsSavedInDB:           0,
+		totalDataWrittenToDB:      0,
 	}
 }
 
@@ -182,4 +184,18 @@ func (server *Server) UpdateDBWriteTime(writeTime time.Duration) {
 	defer server.Unlock()
 
 	server.totalTimeTakenToStoreInDB += writeTime
+}
+
+func (server *Server) GetTotalDataWrittenToDB() int64 {
+	server.Lock()
+	defer server.Unlock()
+
+	return server.totalDataWrittenToDB
+}
+
+func (server *Server) UpdateTotalDataWrittenToDB(size int64) {
+	server.Lock()
+	defer server.Unlock()
+
+	server.totalDataWrittenToDB += size
 }

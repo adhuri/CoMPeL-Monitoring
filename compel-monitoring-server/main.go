@@ -216,9 +216,12 @@ func PrintStatisticsUtility(wg *sync.WaitGroup, server *model.Server) {
 				influxServerIp := server.GetInfluxServer()
 				totalWriteTime := server.GetDBWriteTime()
 				totalPointsSaved := server.GetPointsSavedInDBCounter()
+				totalDataSaved := server.GetTotalDataWrittenToDB()
 				avgWriteTime := totalWriteTime.Seconds() / float64(totalPointsSaved)
-				fmt.Println("\t\t Average DB Write Time :     \t", avgWriteTime, " seconds")
+				avgWriteTime = avgWriteTime * 1000
 				fmt.Println("\t\t Connected To Influx Server: \t", influxServerIp)
+				fmt.Println("\t\t Average DB Write Time :     \t", avgWriteTime, " ms")
+				fmt.Println("\t\t Total Data Saved in DB:     \t", totalDataSaved)
 				totalPacketReceived := server.GetPacketReceivedCounter()
 				activeAgents := []string{}
 				server.RetrieveAllActiveClients(&activeAgents)

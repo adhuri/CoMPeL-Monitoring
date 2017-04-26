@@ -24,8 +24,17 @@ func StoreData(agentIp string, dataReceived []monitorProtocol.ContainerStats, se
 			timestamp := containerStat.Timestamp
 
 			dateTime := time.Unix(timestamp, 0)
+			byteArray1 := []byte(containerId)
+			size1 := len(byteArray1)
+			//fmt.Println(size1)
+
+			byteArray2 := []byte(agentIp)
+			size2 := len(byteArray2)
+			//fmt.Println(size2)
 			AddPoint(agentIp, containerId, cpuUsage, memoryUsage, dateTime, conn)
+
 			server.IncrementPointsSavedInDBCounterCounter()
+			server.UpdateTotalDataWrittenToDB(int64(24 + size2 + size1))
 		}
 		conn.Close()
 		elapsed := time.Since(startTime)
